@@ -1,3 +1,17 @@
+/** Position Table[Fund] codes for the Swiss-domiciled fund vehicles (see quarterly.ts's F2P for their display names). */
+const SWISS_FUNDS = new Set(["SwHYS A", "SwHYS B", "SwHYSOFF"]);
+
+/** Deal SRM IDs with a funded position in any Swiss-domiciled fund vehicle, derived from Position Table[Fund]. */
+export function buildSwissHeldSet(rawPosition: Record<string, unknown>[]): Set<string> {
+    const s = new Set<string>();
+    for (const r of rawPosition) {
+        const srmId = String(r["Investment Deal SRM ID"] ?? "").trim();
+        const fund = String(r.Fund ?? "").trim();
+        if (srmId && SWISS_FUNDS.has(fund)) s.add(srmId);
+    }
+    return s;
+}
+
 export const esc = (s: unknown): string =>
     String(s ?? "")
         .replace(/&/g, "&amp;")

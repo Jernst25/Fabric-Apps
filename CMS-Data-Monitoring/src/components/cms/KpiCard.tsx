@@ -31,8 +31,9 @@ export function KpiCard({
         <Tag
             onClick={onClick}
             className={cn(
-                "rounded-xl border border-border bg-card p-l flex items-start justify-between text-left w-full",
-                onClick && "hover:border-primary/40 hover:bg-hover cursor-pointer",
+                "rounded-sm border border-border bg-card p-l flex items-start justify-between text-left w-full",
+                "transition-all duration-150 hover:-translate-y-[3px] hover:shadow-lg hover:border-primary",
+                onClick && "cursor-pointer",
             )}
         >
             <div>

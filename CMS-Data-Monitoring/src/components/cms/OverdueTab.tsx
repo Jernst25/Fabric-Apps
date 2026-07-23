@@ -4,7 +4,6 @@ import type { DealEntry, OverdueResult, PersonGroup, StatusRow } from "@/lib/cms
 import { cmsUrl } from "@/lib/cms/utils";
 import type { EmailInput } from "@/lib/cms/email";
 import { KpiCard } from "./KpiCard";
-import { PersonBarChart } from "./PersonBarChart";
 import { CollapsibleGroup } from "./CollapsibleGroup";
 import { GroupList } from "./GroupList";
 import { DaysBar } from "./DaysBar";
@@ -34,7 +33,7 @@ interface QueueEntry {
 
 function DealRow({ deal }: { deal: DealEntry }) {
     return (
-        <div className="flex items-center gap-m px-l py-s pl-[64px] text-300">
+        <div className="flex items-center gap-m px-l py-xs pl-[64px] text-100">
             <div className="flex items-center gap-s flex-1 min-w-0">
                 <a
                     href={cmsUrl(deal.deal)}
@@ -46,16 +45,21 @@ function DealRow({ deal }: { deal: DealEntry }) {
                     <ExternalLink className="icon-size-100 shrink-0" />
                 </a>
                 {deal.realized && (
-                    <span className="text-200 rounded bg-muted px-s py-xxs font-medium whitespace-nowrap">REALIZED</span>
+                    <span className="text-100 rounded bg-muted px-s py-xxs font-medium whitespace-nowrap">REALIZED</span>
                 )}
                 {deal.excluded && (
-                    <span className="text-200 rounded bg-[color:var(--color-sev-high-bg)] text-[color:var(--color-sev-high)] px-s py-xxs font-medium whitespace-nowrap">
+                    <span className="text-100 rounded bg-[color:var(--color-sev-high-bg)] text-[color:var(--color-sev-high)] px-s py-xxs font-medium whitespace-nowrap">
                         EXCLUDED
                     </span>
                 )}
                 {deal.troubledCredit && (
-                    <span className="text-200 rounded bg-[color:var(--color-sev-medium-bg)] text-[color:var(--color-sev-medium)] px-s py-xxs font-medium whitespace-nowrap">
+                    <span className="text-100 rounded bg-[color:var(--color-sev-medium-bg)] text-[color:var(--color-sev-medium)] px-s py-xxs font-medium whitespace-nowrap">
                         TROUBLED CREDIT
+                    </span>
+                )}
+                {deal.swissHeld && (
+                    <span className="text-100 rounded bg-muted text-muted-foreground px-s py-xxs font-medium whitespace-nowrap">
+                        SWISS HELD
                     </span>
                 )}
                 {deal.comment && (
@@ -65,7 +69,7 @@ function DealRow({ deal }: { deal: DealEntry }) {
                         className="icon-size-100 rounded-full bg-accent shrink-0 cursor-help"
                     />
                 )}
-                <span className="text-200 text-muted-foreground whitespace-nowrap">{deal.dealSrmId}</span>
+                <span className="text-100 text-muted-foreground whitespace-nowrap">{deal.dealSrmId}</span>
             </div>
             <div className="flex gap-xs flex-wrap justify-end">
                 {deal.periods.map((p) => (
@@ -73,7 +77,7 @@ function DealRow({ deal }: { deal: DealEntry }) {
                         key={p.period}
                         title={`${p.days}d overdue`}
                         className={cn(
-                            "text-200 rounded-full px-s py-xxs font-medium whitespace-nowrap",
+                            "text-100 rounded px-s py-xxs font-medium whitespace-nowrap",
                             p.days >= 50
                                 ? "bg-[color:var(--color-status-not-approved-bg)] text-[color:var(--color-status-not-approved)]"
                                 : "bg-muted text-muted-foreground",
@@ -109,6 +113,7 @@ function Section({
                     subtitle={`${g.deals.length} deal${g.deals.length === 1 ? "" : "s"} outstanding`}
                     stat={<DaysBar days={g.maxDays} maxDays={Math.max(...groups.map((x) => x.maxDays), 1)} />}
                     onEmail={() => onEmail(g.person, g.deals)}
+                    defaultOpen
                 >
                     {g.deals.map((d) => (
                         <DealRow key={d.dealSrmId} deal={d} />
@@ -125,6 +130,7 @@ export function OverdueTab({ data }: { data: OverdueResult }) {
     const [criticalOnly, setCriticalOnly] = useState(false);
     const [troubledOnly, setTroubledOnly] = useState(false);
     const [excludedOnly, setExcludedOnly] = useState(false);
+    const [swissOnly, setSwissOnly] = useState(false);
     const [minDays, setMinDays] = useState(0);
     const [periodFilter, setPeriodFilter] = useState("All");
     const [search, setSearch] = useState("");
@@ -157,6 +163,7 @@ export function OverdueTab({ data }: { data: OverdueResult }) {
                             // matching pill is turned on (not an "isolate to only this" toggle).
                             if (!troubledOnly && d.troubledCredit) return false;
                             if (!excludedOnly && d.excluded) return false;
+                            if (swissOnly && !d.swissHeld) return false;
                             if (d.maxDays < minDays) return false;
                             if (periodFilter !== "All" && !d.periods.some((p) => p.period === periodFilter)) return false;
                             if (search) {
@@ -181,7 +188,7 @@ export function OverdueTab({ data }: { data: OverdueResult }) {
                     };
                 })
                 .filter((g) => g.deals.length > 0);
-    }, [regionFilter, realizedFilter, criticalOnly, troubledOnly, excludedOnly, minDays, periodFilter, search]);
+    }, [regionFilter, realizedFilter, criticalOnly, troubledOnly, excludedOnly, swissOnly, minDays, periodFilter, search]);
 
     const notLoaded = useMemo(
         () => (isolate === "notApproved" || isolate === "noFinancials" ? [] : filterGroups(data.notLoaded)),
@@ -198,13 +205,14 @@ export function OverdueTab({ data }: { data: OverdueResult }) {
         return data.noFinancials.filter((d) => {
             if (!troubledOnly && d.troubledCredit) return false;
             if (!excludedOnly && d.excluded) return false;
+            if (swissOnly && !d.swissHeld) return false;
             if (search) {
                 const q = search.toLowerCase();
                 if (!d.deal.toLowerCase().includes(q) && !d.person.toLowerCase().includes(q)) return false;
             }
             return true;
         });
-    }, [data, isolate, search, realizedFilter, periodFilter, troubledOnly, excludedOnly]);
+    }, [data, isolate, search, realizedFilter, periodFilter, troubledOnly, excludedOnly, swissOnly]);
 
     const dealsImpactedShown = new Set([...notLoaded, ...notApproved].flatMap((g) => g.deals.map((d) => d.dealSrmId))).size;
     const dealsShown = dealsImpactedShown + noFinancials.length;
@@ -219,9 +227,6 @@ export function OverdueTab({ data }: { data: OverdueResult }) {
     // reflect the full unfiltered dataset and would otherwise ignore every filter above.
     const notLoadedPeriodsShown = notLoaded.reduce((s, g) => s + g.periodCount, 0);
     const notApprovedPeriodsShown = notApproved.reduce((s, g) => s + g.periodCount, 0);
-
-    const notLoadedChart = notLoaded.map((g) => ({ person: g.person, count: g.deals.length }));
-    const notApprovedChart = notApproved.map((g) => ({ person: g.person, count: g.deals.length }));
 
     // Recomputed from the filtered notLoaded/notApproved/noFinancials lists — data.alerts is
     // built once from the full unfiltered dataset and would otherwise ignore every filter above.
@@ -252,6 +257,7 @@ export function OverdueTab({ data }: { data: OverdueResult }) {
                     realizedStatus: d.realized ? "Realized" : "Unrealized",
                     excluded: d.excluded,
                     troubledCredit: d.troubledCredit,
+                    swissHeld: d.swissHeld,
                 });
             }
         }
@@ -265,6 +271,7 @@ export function OverdueTab({ data }: { data: OverdueResult }) {
                     realizedStatus: d.realized ? "Realized" : "Unrealized",
                     excluded: d.excluded,
                     troubledCredit: d.troubledCredit,
+                    swissHeld: d.swissHeld,
                 });
             }
         }
@@ -277,6 +284,7 @@ export function OverdueTab({ data }: { data: OverdueResult }) {
                 realizedStatus: "Unrealized",
                 excluded: nf.excluded,
                 troubledCredit: nf.troubledCredit,
+                swissHeld: nf.swissHeld,
             });
         }
         return rows.sort((a, b) => a.deal.localeCompare(b.deal));
@@ -334,13 +342,14 @@ export function OverdueTab({ data }: { data: OverdueResult }) {
                 <FilterPill active={criticalOnly} onClick={() => setCriticalOnly((c) => !c)}>Critical ≥120d</FilterPill>
                 <FilterPill active={troubledOnly} onClick={() => setTroubledOnly((v) => !v)}>Troubled Credit</FilterPill>
                 <FilterPill active={excludedOnly} onClick={() => setExcludedOnly((v) => !v)}>Excluded</FilterPill>
+                <FilterPill active={swissOnly} onClick={() => setSwissOnly((v) => !v)}>Swiss Held</FilterPill>
                 <FilterPill active={isolate === "noFinancials"} onClick={() => setIsolate((v) => (v === "noFinancials" ? "none" : "noFinancials"))}>
                     No Financials
                 </FilterPill>
                 <select
                     value={minDays}
                     onChange={(e) => setMinDays(Number(e.target.value))}
-                    className="rounded-full border border-input bg-card px-l py-s text-300"
+                    className="rounded-sm border border-input bg-card px-m py-xs text-200"
                 >
                     {[0, 15, 30, 50, 60, 90, 120].map((d) => (
                         <option key={d} value={d}>{d === 0 ? "Any days" : `≥ ${d} days`}</option>
@@ -349,7 +358,7 @@ export function OverdueTab({ data }: { data: OverdueResult }) {
                 <select
                     value={periodFilter}
                     onChange={(e) => setPeriodFilter(e.target.value)}
-                    className="rounded-full border border-input bg-card px-l py-s text-300"
+                    className="rounded-sm border border-input bg-card px-m py-xs text-200"
                 >
                     <option value="All">All Periods</option>
                     {periodOptions.map((p) => (
@@ -358,18 +367,18 @@ export function OverdueTab({ data }: { data: OverdueResult }) {
                 </select>
                 <button
                     onClick={startBulkFollowUps}
-                    className="inline-flex items-center gap-xs rounded-full bg-primary text-primary-foreground px-l py-s text-300 font-semibold hover:opacity-90"
+                    className="inline-flex items-center gap-xs rounded-sm bg-primary text-primary-foreground px-m py-xs text-200 font-semibold hover:opacity-90"
                 >
-                    <Mail className="icon-size-200" /> Bulk follow-ups
+                    <Mail className="icon-size-100" /> Bulk follow-ups
                 </button>
                 <div className="ml-auto flex items-center gap-m">
                     <div className="relative">
-                        <Search className="icon-size-200 absolute left-m top-1/2 -translate-y-1/2 text-muted-foreground" />
+                        <Search className="icon-size-100 absolute left-s top-1/2 -translate-y-1/2 text-muted-foreground" />
                         <input
                             value={search}
                             onChange={(e) => setSearch(e.target.value)}
                             placeholder="Search person or deal…"
-                            className="rounded-full border border-input bg-card pl-[36px] pr-l py-s text-300 min-w-[220px]"
+                            className="rounded-sm border border-input bg-card pl-[28px] pr-m py-xs text-200 min-w-[220px]"
                         />
                     </div>
                     <span className="text-200 text-muted-foreground whitespace-nowrap">{dealsShown} deals shown</span>
@@ -396,12 +405,12 @@ export function OverdueTab({ data }: { data: OverdueResult }) {
             </div>
 
             {alertsShown.length > 0 && (
-                <div className="rounded-xl border border-[color:var(--color-alert)]/30 bg-[color:var(--color-alert-bg)] px-l py-m space-y-s">
-                    <div className="flex items-center gap-s font-semibold text-[color:var(--color-alert)]">
-                        <AlertTriangle className="icon-size-300" />
+                <div className="rounded-sm border border-[color:var(--color-alert)]/30 bg-[color:var(--color-alert-bg)] px-m py-xs space-y-xxs">
+                    <div className="flex items-center gap-xs font-semibold text-100 text-[color:var(--color-alert)]">
+                        <AlertTriangle className="icon-size-100" />
                         Hold emails — {alertsShown.length} deal{alertsShown.length === 1 ? "" : "s"} with active blotter comments
                     </div>
-                    <ul className="text-300 space-y-xs">
+                    <ul className="text-100 space-y-xxs">
                         {alertsShown.map((a, i) => (
                             <li key={i}>
                                 <span className="font-medium">{a.deal}</span> ({a.person}): {a.comment}
@@ -410,11 +419,6 @@ export function OverdueTab({ data }: { data: OverdueResult }) {
                     </ul>
                 </div>
             )}
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-m">
-                {notLoadedChart.length > 0 && <PersonBarChart title="Not Loaded by associate" data={notLoadedChart} />}
-                {notApprovedChart.length > 0 && <PersonBarChart title="Not Approved by approver" data={notApprovedChart} />}
-            </div>
 
             {notLoaded.length === 0 && notApproved.length === 0 && noFinancials.length === 0 ? (
                 <EmptyState message="No overdue deals match the current filters." />

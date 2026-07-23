@@ -48,6 +48,7 @@ export function useSequentialQueries(specs: QuerySpec[]): UseSequentialQueriesRe
     }, [key]);
 
     useEffect(() => {
+        // eslint-disable-next-line react-hooks/set-state-in-effect -- intentional fetch-on-mount/deps-change
         execute();
     }, [execute]);
 

@@ -1,5 +1,5 @@
 import { asString, truthy } from "@/lib/dax";
-import { lastInTeam, secLastInTeam, splitCamel } from "./utils";
+import { buildSwissHeldSet, lastInTeam, secLastInTeam, splitCamel } from "./utils";
 
 export interface Quarter {
     label: string;
@@ -76,6 +76,7 @@ export interface QFDealView {
     excluded: boolean;
     troubledCredit: boolean;
     euInvested: boolean;
+    swissHeld: boolean;
 }
 
 export interface QFDealEntry {
@@ -85,6 +86,7 @@ export interface QFDealEntry {
     excluded: boolean;
     troubledCredit: boolean;
     euInvested: boolean;
+    swissHeld: boolean;
 }
 
 export interface QFPersonGroup {
@@ -183,6 +185,7 @@ export function buildQuarterly(
     const { finMap, approverByEntity } = buildFinMap(rawApproval);
     const unapprSet = buildUnapprovedSet(rawUnapproved);
     const posMap = buildPosMap(rawPosition);
+    const swissHeldSet = buildSwissHeldSet(rawPosition);
 
     const dealsSrmByEntity = new Map<string, string>();
     for (const r of rawBlotter) {
@@ -201,6 +204,7 @@ export function buildQuarterly(
             excluded: d.exclude,
             troubledCredit: d.troubledCredit,
             euInvested: d.euInvested,
+            swissHeld: swissHeldSet.has(srmId),
         };
     });
 
@@ -223,6 +227,7 @@ export function buildQuarterly(
                 excluded: d.exclude,
                 troubledCredit: d.troubledCredit,
                 euInvested: d.euInvested,
+                swissHeld: view.swissHeld,
             });
         }
         return [...byPerson.entries()]

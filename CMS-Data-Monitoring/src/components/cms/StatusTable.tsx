@@ -5,7 +5,7 @@ import { copyTextToClipboard } from "@/lib/cms/utils";
 import { StatusBadge } from "./StatusBadge";
 
 function flagsOf(r: StatusRow): string {
-    return [r.excluded && "Excluded", r.troubledCredit && "Troubled Credit"].filter(Boolean).join(", ");
+    return [r.excluded && "Excluded", r.troubledCredit && "Troubled Credit", r.swissHeld && "Swiss Held"].filter(Boolean).join(", ");
 }
 
 function toTsv(rows: StatusRow[]): string {
@@ -26,12 +26,12 @@ export function StatusTable({ rows }: { rows: StatusRow[] }) {
     if (rows.length === 0) return null;
 
     return (
-        <div className="rounded-xl border border-border bg-card overflow-hidden">
+        <div className="rounded-sm border border-border bg-card overflow-hidden">
             <div className="flex items-center justify-between px-l py-m border-b border-border">
                 <h3 className="text-400 font-semibold">Status Table</h3>
                 <button
                     onClick={handleCopy}
-                    className="inline-flex items-center gap-xs rounded-lg border border-border px-m py-s text-200 font-medium hover:bg-secondary"
+                    className="inline-flex items-center gap-xs rounded-sm border border-border px-m py-s text-200 font-medium hover:bg-secondary"
                 >
                     <Copy className="icon-size-200" />
                     {copyState === "copied" ? "Copied!" : copyState === "failed" ? "Copy failed — try again" : "Copy table"}

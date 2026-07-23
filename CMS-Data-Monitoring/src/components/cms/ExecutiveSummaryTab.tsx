@@ -1,6 +1,5 @@
 import { useMemo, useState } from "react";
 import { Search } from "lucide-react";
-import type { Anomaly, CompanyFlags } from "@/lib/cms/anomaly-rules";
 import type { DealEntry, NoFinancialsDeal, OverdueResult, PersonGroup } from "@/lib/cms/overdue";
 import type { QFDealEntry, QFDealView, QFPersonGroup, QuarterlyResult } from "@/lib/cms/quarterly";
 import { KpiCard } from "./KpiCard";
@@ -19,20 +18,22 @@ interface SharedFilters {
     criticalOnly: boolean;
     troubledOnly: boolean;
     excludedOnly: boolean;
+    swissOnly: boolean;
     minDays: number;
     periodFilter: string;
     search: string;
 }
 
-/** Region/Troubled Credit/Excluded apply everywhere this shape exists (Overdue, Quarterly, and — via companyFlags — Anomaly). */
+/** Region/Troubled Credit/Excluded/Swiss Held apply everywhere this shape exists (Overdue, Quarterly, and — via companyFlags — Anomaly). */
 function matchesCommonFlags(
-    d: { troubledCredit: boolean; excluded: boolean; euInvested: boolean },
+    d: { troubledCredit: boolean; excluded: boolean; euInvested: boolean; swissHeld: boolean },
     f: SharedFilters,
 ): boolean {
     if (f.regionFilter === "DL Europe" && !d.euInvested) return false;
     if (f.regionFilter === "DL US" && d.euInvested) return false;
     if (!f.troubledOnly && d.troubledCredit) return false;
     if (!f.excludedOnly && d.excluded) return false;
+    if (f.swissOnly && !d.swissHeld) return false;
     return true;
 }
 
@@ -86,6 +87,7 @@ function filterOverdue(overdue: OverdueResult, f: SharedFilters): OverdueResult 
         : overdue.noFinancials.filter((d) => {
             if (!f.troubledOnly && d.troubledCredit) return false;
             if (!f.excludedOnly && d.excluded) return false;
+            if (f.swissOnly && !d.swissHeld) return false;
             if (f.search) {
                 const q = f.search.toLowerCase();
                 if (!d.deal.toLowerCase().includes(q) && !d.person.toLowerCase().includes(q)) return false;
@@ -105,8 +107,10 @@ function filterOverdue(overdue: OverdueResult, f: SharedFilters): OverdueResult 
         notLoaded,
         notApproved,
         noFinancials,
-        // StatusRow carries no region data — only Troubled Credit/Excluded apply here.
-        statusRows: overdue.statusRows.filter((r) => (f.troubledOnly || !r.troubledCredit) && (f.excludedOnly || !r.excluded)),
+        // StatusRow carries no region data — only Troubled Credit/Excluded/Swiss Held apply here.
+        statusRows: overdue.statusRows.filter((r) =>
+            (f.troubledOnly || !r.troubledCredit) && (f.excludedOnly || !r.excluded) && (!f.swissOnly || r.swissHeld),
+        ),
         alerts,
         totalDealsOverdue: allDeals.size,
         notLoadedPeriods: notLoaded.reduce((s, g) => s + g.periodCount, 0),
@@ -148,26 +152,13 @@ function filterQuarterly(quarterly: QuarterlyResult, f: SharedFilters): Quarterl
     };
 }
 
-function filterAnomalies(anomalies: Anomaly[], companyFlags: Map<string, CompanyFlags>, f: SharedFilters): Anomaly[] {
-    return anomalies.filter((a) => {
-        const flags = companyFlags.get(a.company) ?? { troubledCredit: false, excluded: false, euInvested: false };
-        if (!matchesCommonFlags(flags, f)) return false;
-        if (f.search && !a.company.toLowerCase().includes(f.search.toLowerCase())) return false;
-        return true;
-    });
-}
-
 export function ExecutiveSummaryTab({
     overdue,
     quarterly,
-    anomalies,
-    companyFlags,
     quarterLabel,
 }: {
     overdue: OverdueResult;
     quarterly: QuarterlyResult;
-    anomalies: Anomaly[];
-    companyFlags: Map<string, CompanyFlags>;
     quarterLabel: string;
 }) {
     const [regionFilter, setRegionFilter] = useState("All");
@@ -175,12 +166,13 @@ export function ExecutiveSummaryTab({
     const [criticalOnly, setCriticalOnly] = useState(false);
     const [troubledOnly, setTroubledOnly] = useState(false);
     const [excludedOnly, setExcludedOnly] = useState(false);
+    const [swissOnly, setSwissOnly] = useState(false);
     const [minDays, setMinDays] = useState(0);
     const [periodFilter, setPeriodFilter] = useState("All");
     const [search, setSearch] = useState("");
 
     const filters: SharedFilters = {
-        regionFilter, realizedFilter, criticalOnly, troubledOnly, excludedOnly, minDays, periodFilter, search,
+        regionFilter, realizedFilter, criticalOnly, troubledOnly, excludedOnly, swissOnly, minDays, periodFilter, search,
     };
 
     const periodOptions = useMemo(() => {
@@ -195,25 +187,23 @@ export function ExecutiveSummaryTab({
 
     const filteredOverdue = useMemo(() => filterOverdue(overdue, filters), [overdue, filters]);
     const filteredQuarterly = useMemo(() => filterQuarterly(quarterly, filters), [quarterly, filters]);
-    const filteredAnomalies = useMemo(
-        () => filterAnomalies(anomalies, companyFlags, filters),
-        [anomalies, companyFlags, filters],
-    );
 
-    const pctComplete = filteredQuarterly.dealsInQuarter > 0
-        ? ((filteredQuarterly.dealsInQuarter - filteredQuarterly.notLoadedCount - filteredQuarterly.notApprovedCount) / filteredQuarterly.dealsInQuarter) * 100
-        : 0;
-    const highAnomalies = filteredAnomalies.filter((a) => a.severity === "High").length;
+    const periodLabel = useMemo(() => {
+        if (periodFilter === "All") return null;
+        const [year, month, day] = periodFilter.split("-");
+        return `${Number(month)}/${Number(day)}/${year}`;
+    }, [periodFilter]);
 
-    const overdueNotLoadedChart = filteredOverdue.notLoaded.map((g) => ({ person: g.person, count: g.deals.length }));
-    const overdueNotApprovedChart = filteredOverdue.notApproved.map((g) => ({ person: g.person, count: g.deals.length }));
-    const quarterlyNotLoadedChart = filteredQuarterly.notLoaded.map((g) => ({ person: g.person, count: g.deals.length }));
-    const quarterlyNotApprovedChart = filteredQuarterly.notApproved.map((g) => ({ person: g.person, count: g.deals.length }));
-    const anomalySeverityChart = [
-        { person: "High", count: filteredAnomalies.filter((a) => a.severity === "High").length },
-        { person: "Medium", count: filteredAnomalies.filter((a) => a.severity === "Medium").length },
-        { person: "Low", count: filteredAnomalies.filter((a) => a.severity === "Low").length },
-    ];
+    const overdueNotLoadedChart = filteredOverdue.notLoaded.map((g) => ({
+        person: g.person,
+        count: g.deals.length,
+        deals: g.deals.map((d) => d.deal),
+    }));
+    const overdueNotApprovedChart = filteredOverdue.notApproved.map((g) => ({
+        person: g.person,
+        count: g.deals.length,
+        deals: g.deals.map((d) => d.deal),
+    }));
 
     return (
         <div className="space-y-l">
@@ -233,10 +223,11 @@ export function ExecutiveSummaryTab({
                 <FilterPill active={criticalOnly} onClick={() => setCriticalOnly((v) => !v)}>Critical ≥120d</FilterPill>
                 <FilterPill active={troubledOnly} onClick={() => setTroubledOnly((v) => !v)}>Troubled Credit</FilterPill>
                 <FilterPill active={excludedOnly} onClick={() => setExcludedOnly((v) => !v)}>Excluded</FilterPill>
+                <FilterPill active={swissOnly} onClick={() => setSwissOnly((v) => !v)}>Swiss Held</FilterPill>
                 <select
                     value={minDays}
                     onChange={(e) => setMinDays(Number(e.target.value))}
-                    className="rounded-full border border-input bg-card px-l py-s text-300"
+                    className="rounded-sm border border-input bg-card px-m py-xs text-200"
                 >
                     {[0, 15, 30, 50, 60, 90, 120].map((d) => (
                         <option key={d} value={d}>{d === 0 ? "Any days" : `≥ ${d} days`}</option>
@@ -245,7 +236,7 @@ export function ExecutiveSummaryTab({
                 <select
                     value={periodFilter}
                     onChange={(e) => setPeriodFilter(e.target.value)}
-                    className="rounded-full border border-input bg-card px-l py-s text-300"
+                    className="rounded-sm border border-input bg-card px-m py-xs text-200"
                 >
                     <option value="All">All Periods</option>
                     {periodOptions.map((p) => {
@@ -254,12 +245,12 @@ export function ExecutiveSummaryTab({
                     })}
                 </select>
                 <div className="relative ml-auto">
-                    <Search className="icon-size-200 absolute left-m top-1/2 -translate-y-1/2 text-muted-foreground" />
+                    <Search className="icon-size-100 absolute left-s top-1/2 -translate-y-1/2 text-muted-foreground" />
                     <input
                         value={search}
                         onChange={(e) => setSearch(e.target.value)}
                         placeholder="Search person, deal, or company…"
-                        className="rounded-full border border-input bg-card pl-[36px] pr-l py-s text-300 min-w-[220px]"
+                        className="rounded-sm border border-input bg-card pl-[28px] pr-m py-xs text-200 min-w-[220px]"
                     />
                 </div>
             </FilterRibbon>
@@ -268,7 +259,7 @@ export function ExecutiveSummaryTab({
                 overdue={filteredOverdue}
                 quarterly={filteredQuarterly}
                 quarterLabel={quarterLabel}
-                anomalies={filteredAnomalies}
+                periodLabel={periodLabel}
             />
 
             <div>
@@ -281,32 +272,9 @@ export function ExecutiveSummaryTab({
                 </div>
             </div>
 
-            <div>
-                <h3 className="text-400 font-semibold mb-m">Quarterly FS Status — {quarterLabel}</h3>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-m">
-                    <KpiCard label="Deals in Quarter" value={filteredQuarterly.dealsInQuarter} />
-                    <KpiCard label="Not Loaded" value={filteredQuarterly.notLoadedCount} accent="medium" />
-                    <KpiCard label="Not Approved" value={filteredQuarterly.notApprovedCount} accent="high" />
-                    <KpiCard label="Complete" value={`${pctComplete.toFixed(1)}%`} accent="low" />
-                </div>
-            </div>
-
-            <div>
-                <h3 className="text-400 font-semibold mb-m">CMS Data Anomaly Board</h3>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-m">
-                    <KpiCard label="Total Anomalies" value={filteredAnomalies.length} />
-                    <KpiCard label="High Severity" value={highAnomalies} accent="high" />
-                    <KpiCard label="Medium Severity" value={filteredAnomalies.filter((a) => a.severity === "Medium").length} accent="medium" />
-                    <KpiCard label="Low Severity" value={filteredAnomalies.filter((a) => a.severity === "Low").length} accent="low" />
-                </div>
-            </div>
-
             <div className="grid grid-cols-1 md:grid-cols-2 gap-m">
                 {overdueNotLoadedChart.length > 0 && <PersonBarChart title="Overdue: Not Loaded by associate" data={overdueNotLoadedChart} />}
                 {overdueNotApprovedChart.length > 0 && <PersonBarChart title="Overdue: Not Approved by approver" data={overdueNotApprovedChart} />}
-                {quarterlyNotLoadedChart.length > 0 && <PersonBarChart title={`${quarterLabel}: Not Loaded by associate`} data={quarterlyNotLoadedChart} />}
-                {quarterlyNotApprovedChart.length > 0 && <PersonBarChart title={`${quarterLabel}: Not Approved by approver`} data={quarterlyNotApprovedChart} />}
-                <PersonBarChart title="Anomalies by severity" data={anomalySeverityChart} />
             </div>
         </div>
     );

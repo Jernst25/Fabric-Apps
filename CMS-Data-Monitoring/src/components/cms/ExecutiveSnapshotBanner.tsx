@@ -1,6 +1,5 @@
 import type { OverdueResult } from "@/lib/cms/overdue";
 import type { QuarterlyResult } from "@/lib/cms/quarterly";
-import type { Anomaly } from "@/lib/cms/anomaly-rules";
 
 function personWithMaxDays(overdue: OverdueResult): string | null {
     let best: { person: string; days: number } | null = null;
@@ -25,12 +24,13 @@ export function ExecutiveSnapshotBanner({
     overdue,
     quarterly,
     quarterLabel,
-    anomalies,
+    periodLabel,
 }: {
     overdue: OverdueResult;
     quarterly: QuarterlyResult;
     quarterLabel: string;
-    anomalies: Anomaly[];
+    /** Formatted date of the specific period selected on the page (e.g. "3/31/2026"), or null when "All Periods" is selected. */
+    periodLabel: string | null;
 }) {
     const totalPeriods = overdue.notLoadedPeriods + overdue.notApprovedPeriods;
     const peopleCount = new Set([...overdue.notLoaded, ...overdue.notApproved].map((g) => g.person)).size;
@@ -38,20 +38,19 @@ export function ExecutiveSnapshotBanner({
     const pctComplete = quarterly.dealsInQuarter > 0
         ? ((quarterly.dealsInQuarter - quarterly.notLoadedCount - quarterly.notApprovedCount) / quarterly.dealsInQuarter) * 100
         : 0;
-    const highCount = anomalies.filter((a) => a.severity === "High").length;
 
     return (
-        <div className="rounded-xl bg-[color:var(--color-foreground)] border-l-4 border-accent px-xl py-l flex flex-wrap items-center justify-between gap-l">
+        <div className="rounded-sm bg-[color:var(--color-foreground)] border-l-4 border-accent px-xl py-l flex flex-wrap items-center justify-between gap-l">
             <div className="max-w-[640px]">
                 <div className="text-200 font-bold uppercase tracking-wide text-accent mb-xs">Executive Snapshot</div>
                 <p className="text-300 text-white leading-400">
+                    {periodLabel && <>As of <strong>{periodLabel}</strong>, </>}
                     <strong>{totalPeriods} overdue periods</strong> across <strong>{overdue.totalDealsOverdue} deals</strong> sit
                     with <strong>{peopleCount} people</strong>
                     {maxPerson && (
                         <> — longest outstanding <strong>{overdue.maxDaysOverdue} days</strong> ({maxPerson})</>
                     )}
-                    . {quarterLabel} fund reporting is <strong>{pctComplete.toFixed(1)}% complete</strong>.{" "}
-                    <strong>{anomalies.length} data anomalies</strong> open ({highCount} high).
+                    . {quarterLabel} fund reporting is <strong>{pctComplete.toFixed(1)}% complete</strong>.
                 </p>
             </div>
             <div className="flex items-center divide-x divide-white/15">
@@ -59,7 +58,6 @@ export function ExecutiveSnapshotBanner({
                 <StatBlock value={String(overdue.notLoadedPeriods)} label="Not Loaded" color="var(--color-accent)" />
                 <StatBlock value={String(overdue.notApprovedPeriods)} label="Not Approved" color="#F87171" />
                 <StatBlock value={`${pctComplete.toFixed(0)}%`} label={`${quarterLabel} Done`} color="var(--color-status-approved)" />
-                <StatBlock value={String(anomalies.length)} label="Anomalies" color="var(--color-accent)" />
             </div>
         </div>
     );

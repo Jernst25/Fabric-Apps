@@ -1,5 +1,6 @@
 EVALUATE SELECTCOLUMNS(DealBlotter,
   "EntityName",             DealBlotter[EntityName],
+  "DealSrmId",              DealBlotter[DealSrmId],
   "Comment",                DealBlotter[Comment],
   "LastModifiedDate",       DealBlotter[LastModifiedDate],
   "RealizedUnrealizedStatus", DealBlotter[RealizedUnrealizedStatus],

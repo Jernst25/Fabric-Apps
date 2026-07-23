@@ -18,7 +18,7 @@ export function GroupList({
     const [open, setOpen] = useState(defaultOpen);
 
     return (
-        <div className="rounded-xl border border-border overflow-hidden">
+        <div className="rounded-sm border border-border overflow-hidden">
             <button
                 onClick={() => setOpen((o) => !o)}
                 aria-expanded={open}
@@ -26,7 +26,7 @@ export function GroupList({
             >
                 <span className="icon-size-100 rounded-full shrink-0" style={{ backgroundColor: dotColor }} />
                 <span className="font-semibold text-300 flex-1">{title}</span>
-                <span className="rounded-full bg-card border border-border px-m py-xxs text-200 font-medium text-muted-foreground whitespace-nowrap">
+                <span className="rounded-sm bg-card border border-border px-m py-xxs text-200 font-medium text-muted-foreground whitespace-nowrap">
                     {badge}
                 </span>
                 <ChevronDown className={cn("icon-size-300 text-muted-foreground transition-transform shrink-0", open && "rotate-180")} />

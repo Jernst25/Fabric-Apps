@@ -70,9 +70,9 @@ export function EmailModal({
                 ref={dialogRef}
                 role="dialog"
                 aria-modal="true"
-                className="w-full max-w-[640px] max-h-[85vh] overflow-auto rounded-2xl bg-card border border-border shadow-xl"
+                className="w-full max-w-[640px] max-h-[85vh] overflow-auto rounded-sm bg-card border border-border shadow-xl"
             >
-                <div className="flex items-center justify-between px-xl py-l border-b border-border bg-primary text-primary-foreground rounded-t-2xl">
+                <div className="flex items-center justify-between px-xl py-l border-b border-border bg-primary text-primary-foreground rounded-t-sm">
                     <div>
                         <div className="text-200 uppercase tracking-wide opacity-80">
                             Draft follow-up email
@@ -83,7 +83,7 @@ export function EmailModal({
                     <button
                         onClick={onClose}
                         aria-label="Close"
-                        className="rounded-full p-xs hover:bg-white/15 focus-visible:outline focus-visible:outline-2 focus-visible:outline-white"
+                        className="rounded-sm p-xs hover:bg-white/15 focus-visible:outline focus-visible:outline-2 focus-visible:outline-white"
                     >
                         <X className="icon-size-300" />
                     </button>
@@ -98,7 +98,7 @@ export function EmailModal({
                     </div>
 
                     <div
-                        className="rounded-lg border border-border p-l bg-background"
+                        className="rounded-sm border border-border p-l bg-background"
                         dangerouslySetInnerHTML={{ __html: html }}
                     />
                 </div>
@@ -106,27 +106,27 @@ export function EmailModal({
                 <div className="flex flex-wrap items-center gap-s px-xl py-l border-t border-border">
                     <button
                         onClick={onClose}
-                        className="rounded-lg border border-border px-l py-s text-300 font-medium hover:bg-secondary"
+                        className="rounded-sm border border-border px-l py-s text-300 font-medium hover:bg-secondary"
                     >
                         Cancel
                     </button>
                     <button
                         onClick={handleCopyImage}
                         className={cn(
-                            "inline-flex items-center gap-xs rounded-lg border border-border px-l py-s text-300 font-medium hover:bg-secondary",
+                            "inline-flex items-center gap-xs rounded-sm border border-border px-l py-s text-300 font-medium hover:bg-secondary",
                         )}
                     >
                         <ImageIcon className="icon-size-200" /> Copy as image
                     </button>
                     <button
                         onClick={handleCopyText}
-                        className="inline-flex items-center gap-xs rounded-lg border border-border px-l py-s text-300 font-medium hover:bg-secondary"
+                        className="inline-flex items-center gap-xs rounded-sm border border-border px-l py-s text-300 font-medium hover:bg-secondary"
                     >
                         <Copy className="icon-size-200" /> Copy text
                     </button>
                     <button
                         onClick={handleOpenMail}
-                        className="inline-flex items-center gap-xs rounded-lg bg-primary text-primary-foreground px-l py-s text-300 font-medium hover:opacity-90"
+                        className="inline-flex items-center gap-xs rounded-sm bg-primary text-primary-foreground px-l py-s text-300 font-medium hover:opacity-90"
                     >
                         <Mail className="icon-size-200" /> Open in Mail
                     </button>
@@ -134,7 +134,7 @@ export function EmailModal({
                     {onNext && queueIndex != null && queueTotal != null && queueIndex < queueTotal - 1 && (
                         <button
                             onClick={onNext}
-                            className="ml-auto rounded-lg bg-secondary px-l py-s text-300 font-medium hover:bg-muted"
+                            className="ml-auto rounded-sm bg-secondary px-l py-s text-300 font-medium hover:bg-muted"
                         >
                             Skip to next →
                         </button>

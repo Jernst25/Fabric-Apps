@@ -76,10 +76,17 @@ export function useCmsData(): CmsData {
         );
     }, [finRes, covRes, blotRes, secRes]);
 
+    // Position Table backs the Swiss Held filter across all tabs, in addition to Quarterly's
+    // own fund-badge lookup — fetched once here and shared by all three domain builders below.
+    const positionRows = useMemo(
+        () => (qPositionRes?.status === "success" ? rowsToRecords(qPositionRes.table) : []),
+        [qPositionRes],
+    );
+
     const companyFlags = useMemo(() => {
         if (blotRes?.status !== "success") return new Map<string, CompanyFlags>();
-        return buildCompanyFlags(rowsToRecords(blotRes.table));
-    }, [blotRes]);
+        return buildCompanyFlags(rowsToRecords(blotRes.table), positionRows);
+    }, [blotRes, positionRows]);
 
     const overdue = useMemo(() => {
         if (
@@ -95,14 +102,14 @@ export function useCmsData(): CmsData {
             rowsToRecords(finPeriodsRes.table),
             rowsToRecords(latestApproverRes.table),
             rowsToRecords(unapprovedPeriodsRes.table),
+            positionRows,
         );
-    }, [rosterRes, finPeriodsRes, latestApproverRes, unapprovedPeriodsRes]);
+    }, [rosterRes, finPeriodsRes, latestApproverRes, unapprovedPeriodsRes, positionRows]);
 
     const quarterly = useMemo(() => {
         if (qBlotterRes?.status !== "success" || qApprovalRes?.status !== "success" || qUnapprovedRes?.status !== "success") {
             return null;
         }
-        const positionRows = qPositionRes?.status === "success" ? rowsToRecords(qPositionRes.table) : [];
         return buildQuarterly(
             quarterIndex,
             rowsToRecords(qBlotterRes.table),
@@ -110,7 +117,7 @@ export function useCmsData(): CmsData {
             rowsToRecords(qUnapprovedRes.table),
             positionRows,
         );
-    }, [qBlotterRes, qApprovalRes, qUnapprovedRes, qPositionRes, quarterIndex]);
+    }, [qBlotterRes, qApprovalRes, qUnapprovedRes, positionRows, quarterIndex]);
 
     return { isLoading, error, anomalies, companyFlags, overdue, quarterly, quarterIndex, setQuarterIndex, refetch };
 }

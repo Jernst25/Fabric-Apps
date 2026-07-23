@@ -38,7 +38,7 @@ export function CollapsibleGroup({
                 <button
                     onClick={onEmail}
                     aria-label={`Draft email to ${person}`}
-                    className="inline-flex items-center justify-center rounded-lg border border-border p-s text-primary hover:bg-secondary shrink-0"
+                    className="inline-flex items-center justify-center rounded-sm border border-border p-s text-primary hover:bg-secondary shrink-0"
                 >
                     <Mail className="icon-size-200" />
                 </button>

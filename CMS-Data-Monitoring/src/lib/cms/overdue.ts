@@ -1,5 +1,5 @@
 import { asNumber, asString, truthy } from "@/lib/dax";
-import { lastInTeam, splitCamel } from "./utils";
+import { buildSwissHeldSet, lastInTeam, splitCamel } from "./utils";
 import {
     addDays,
     daysBetween,
@@ -38,6 +38,7 @@ export interface DealEntry {
     euInvested: boolean;
     excluded: boolean;
     troubledCredit: boolean;
+    swissHeld: boolean;
     periods: OverduePeriodItem[];
     maxDays: number;
 }
@@ -57,6 +58,7 @@ export interface NoFinancialsDeal {
     comment: string | null;
     excluded: boolean;
     troubledCredit: boolean;
+    swissHeld: boolean;
 }
 
 export interface StatusRow {
@@ -67,6 +69,7 @@ export interface StatusRow {
     realizedStatus: string;
     excluded: boolean;
     troubledCredit: boolean;
+    swissHeld: boolean;
 }
 
 export interface OverdueAlert {
@@ -308,6 +311,7 @@ function addDealToGroup(
     person: string,
     deal: RosterRow,
     periods: OverduePeriodItem[],
+    swissHeldSet: Set<string>,
 ) {
     if (!map.has(person)) map.set(person, new Map());
     const deals = map.get(person)!;
@@ -320,6 +324,7 @@ function addDealToGroup(
             euInvested: deal.euInvested,
             excluded: deal.exclude,
             troubledCredit: deal.troubledCredit,
+            swissHeld: swissHeldSet.has(deal.dealSrmId),
             periods: [],
             maxDays: 0,
         });
@@ -365,12 +370,14 @@ export function buildOverdue(
     rawFinPeriods: Record<string, unknown>[],
     rawLatestApprover: Record<string, unknown>[],
     rawUnapproved: Record<string, unknown>[],
+    rawPosition: Record<string, unknown>[],
 ): OverdueResult {
     const today = todayUTC();
     const fullRoster = parseRoster(rawRoster);
     const roster = fullRoster.filter(isReportable);
     const entityIdToDealSrmId = buildEntityIdToDealSrmId(roster);
     const knownEntityIds = new Set(fullRoster.map((d) => d.entityId).filter(Boolean));
+    const swissHeldSet = buildSwissHeldSet(rawPosition);
 
     const { resolved: finPeriods, unmatched: finUnmatched } = resolveToDealSrmId(
         parsePeriodRows(rawFinPeriods),
@@ -410,6 +417,7 @@ export function buildOverdue(
                     comment: deal.comment,
                     excluded: deal.exclude,
                     troubledCredit: deal.troubledCredit,
+                    swissHeld: swissHeldSet.has(deal.dealSrmId),
                 });
                 statusRows.push({
                     deal: deal.entityName,
@@ -419,6 +427,7 @@ export function buildOverdue(
                     realizedStatus: deal.realizedStatus,
                     excluded: deal.exclude,
                     troubledCredit: deal.troubledCredit,
+                    swissHeld: swissHeldSet.has(deal.dealSrmId),
                 });
             }
             continue;
@@ -500,7 +509,7 @@ export function buildOverdue(
         }
 
         if (notLoadedPeriods.length > 0) {
-            addDealToGroup(notLoadedByPerson, person, deal, notLoadedPeriods);
+            addDealToGroup(notLoadedByPerson, person, deal, notLoadedPeriods, swissHeldSet);
             statusRows.push({
                 deal: deal.entityName,
                 periods: notLoadedPeriods.map((p) => p.period).join(", "),
@@ -509,11 +518,12 @@ export function buildOverdue(
                 realizedStatus: deal.realizedStatus,
                 excluded: deal.exclude,
                 troubledCredit: deal.troubledCredit,
+                swissHeld: swissHeldSet.has(deal.dealSrmId),
             });
         }
         if (notApprovedPeriods.length > 0) {
             const approverPerson = latestApprover.get(deal.dealSrmId) || secondLastNonEmpty(deal.professionals) || person;
-            addDealToGroup(notApprovedByPerson, approverPerson, deal, notApprovedPeriods);
+            addDealToGroup(notApprovedByPerson, approverPerson, deal, notApprovedPeriods, swissHeldSet);
             statusRows.push({
                 deal: deal.entityName,
                 periods: notApprovedPeriods.map((p) => p.period).join(", "),
@@ -522,6 +532,7 @@ export function buildOverdue(
                 realizedStatus: deal.realizedStatus,
                 excluded: deal.exclude,
                 troubledCredit: deal.troubledCredit,
+                swissHeld: swissHeldSet.has(deal.dealSrmId),
             });
         }
     }

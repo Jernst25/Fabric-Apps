@@ -46,6 +46,11 @@ function DealRow({ deal, status }: { deal: QFDealEntry; status: "Not Loaded" | "
                         TROUBLED CREDIT
                     </span>
                 )}
+                {deal.swissHeld && (
+                    <span className="text-200 rounded bg-muted text-muted-foreground px-s py-xxs font-medium whitespace-nowrap">
+                        SWISS HELD
+                    </span>
+                )}
             </div>
             <div className="flex gap-xs flex-wrap justify-end">
                 {deal.funds.map((f) => (
@@ -104,6 +109,7 @@ export function QuarterlyTab({
     const [regionFilter, setRegionFilter] = useState("All");
     const [troubledOnly, setTroubledOnly] = useState(false);
     const [excludedOnly, setExcludedOnly] = useState(false);
+    const [swissOnly, setSwissOnly] = useState(false);
     const [search, setSearch] = useState("");
     const [emailInput, setEmailInput] = useState<EmailInput | null>(null);
     const [queue, setQueue] = useState<{ items: QueueEntry[]; index: number } | null>(null);
@@ -117,6 +123,7 @@ export function QuarterlyTab({
         // Opt-in inclusion gates: hidden unless the matching pill is turned on.
         if (!troubledOnly && d.troubledCredit) return false;
         if (!excludedOnly && d.excluded) return false;
+        if (swissOnly && !d.swissHeld) return false;
         if (search) {
             const q = search.toLowerCase();
             if (!d.deal.toLowerCase().includes(q) && !person.toLowerCase().includes(q)) return false;
@@ -129,14 +136,14 @@ export function QuarterlyTab({
             (statusFilter === "Not Approved" ? [] : data.notLoaded)
                 .map((g) => ({ ...g, deals: g.deals.filter((d) => matchesFilters(g.person, d)) }))
                 .filter((g) => g.deals.length > 0),
-        [data, statusFilter, fundFilter, regionFilter, troubledOnly, excludedOnly, search],
+        [data, statusFilter, fundFilter, regionFilter, troubledOnly, excludedOnly, swissOnly, search],
     );
     const notApproved = useMemo(
         () =>
             (statusFilter === "Not Loaded" ? [] : data.notApproved)
                 .map((g) => ({ ...g, deals: g.deals.filter((d) => matchesFilters(g.person, d)) }))
                 .filter((g) => g.deals.length > 0),
-        [data, statusFilter, fundFilter, regionFilter, troubledOnly, excludedOnly, search],
+        [data, statusFilter, fundFilter, regionFilter, troubledOnly, excludedOnly, swissOnly, search],
     );
 
     const dealsShown = new Set([...notLoaded, ...notApproved].flatMap((g) => g.deals.map((d) => d.deal))).size;
@@ -152,10 +159,11 @@ export function QuarterlyTab({
                 if (regionFilter === "DL US" && d.euInvested) return false;
                 if (!troubledOnly && d.troubledCredit) return false;
                 if (!excludedOnly && d.excluded) return false;
+                if (swissOnly && !d.swissHeld) return false;
                 if (search && !d.deal.toLowerCase().includes(search.toLowerCase())) return false;
                 return true;
             }),
-        [data, fundFilter, regionFilter, troubledOnly, excludedOnly, search],
+        [data, fundFilter, regionFilter, troubledOnly, excludedOnly, swissOnly, search],
     );
     const dealsInQuarterShown = filteredDeals.length;
     const pctComplete = dealsInQuarterShown > 0
@@ -213,7 +221,7 @@ export function QuarterlyTab({
                         key={q.label}
                         onClick={() => setQuarterIndex(i)}
                         className={cn(
-                            "rounded-lg px-l py-s text-300 font-medium border",
+                            "rounded-sm px-m py-xs text-200 font-medium border",
                             i === quarterIndex
                                 ? "bg-primary text-primary-foreground border-primary"
                                 : "border-border bg-card hover:bg-secondary",
@@ -231,7 +239,7 @@ export function QuarterlyTab({
                 <select
                     value={fundFilter}
                     onChange={(e) => setFundFilter(e.target.value)}
-                    className="rounded-full border border-input bg-card px-l py-s text-300"
+                    className="rounded-sm border border-input bg-card px-m py-xs text-200"
                 >
                     <option value="All">All Funds</option>
                     {data.funds.map((f) => (
@@ -247,20 +255,21 @@ export function QuarterlyTab({
                 <span className="w-px self-stretch bg-border" aria-hidden="true" />
                 <FilterPill active={troubledOnly} onClick={() => setTroubledOnly((v) => !v)}>Troubled Credit</FilterPill>
                 <FilterPill active={excludedOnly} onClick={() => setExcludedOnly((v) => !v)}>Excluded</FilterPill>
+                <FilterPill active={swissOnly} onClick={() => setSwissOnly((v) => !v)}>Swiss Held</FilterPill>
                 <button
                     onClick={startBulkFollowUps}
-                    className="inline-flex items-center gap-xs rounded-full bg-primary text-primary-foreground px-l py-s text-300 font-semibold hover:opacity-90"
+                    className="inline-flex items-center gap-xs rounded-sm bg-primary text-primary-foreground px-m py-xs text-200 font-semibold hover:opacity-90"
                 >
-                    <Mail className="icon-size-200" /> Bulk follow-ups
+                    <Mail className="icon-size-100" /> Bulk follow-ups
                 </button>
                 <div className="ml-auto flex items-center gap-m">
                     <div className="relative">
-                        <Search className="icon-size-200 absolute left-m top-1/2 -translate-y-1/2 text-muted-foreground" />
+                        <Search className="icon-size-100 absolute left-s top-1/2 -translate-y-1/2 text-muted-foreground" />
                         <input
                             value={search}
                             onChange={(e) => setSearch(e.target.value)}
                             placeholder="Search person or deal…"
-                            className="rounded-full border border-input bg-card pl-[36px] pr-l py-s text-300 min-w-[220px]"
+                            className="rounded-sm border border-input bg-card pl-[28px] pr-m py-xs text-200 min-w-[220px]"
                         />
                     </div>
                     <span className="text-200 text-muted-foreground whitespace-nowrap">{dealsShown} deals shown</span>

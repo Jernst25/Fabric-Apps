@@ -6,7 +6,7 @@ export function NoFinancialsTable({ deals }: { deals: NoFinancialsDeal[] }) {
     if (deals.length === 0) return null;
 
     return (
-        <div className="rounded-xl border border-border bg-card overflow-hidden">
+        <div className="rounded-sm border border-border bg-card overflow-hidden">
             <div className="px-l py-m border-b border-border">
                 <h3 className="text-400 font-semibold">Deals with No Financials</h3>
                 <p className="text-200 text-muted-foreground mt-xxs">
@@ -45,6 +45,11 @@ export function NoFinancialsTable({ deals }: { deals: NoFinancialsDeal[] }) {
                                     {d.troubledCredit && (
                                         <span className="text-200 rounded bg-[color:var(--color-sev-medium-bg)] text-[color:var(--color-sev-medium)] px-s py-xxs font-medium whitespace-nowrap">
                                             TROUBLED CREDIT
+                                        </span>
+                                    )}
+                                    {d.swissHeld && (
+                                        <span className="text-200 rounded bg-muted text-muted-foreground px-s py-xxs font-medium whitespace-nowrap">
+                                            SWISS HELD
                                         </span>
                                     )}
                                 </div>

@@ -15,7 +15,7 @@ export function FilterPill({
             onClick={onClick}
             aria-pressed={active}
             className={cn(
-                "rounded-full px-l py-s text-300 font-medium border whitespace-nowrap transition-colors",
+                "rounded-sm px-m py-xs text-200 font-medium border whitespace-nowrap transition-colors",
                 active
                     ? "bg-primary text-primary-foreground border-primary"
                     : "bg-card border-border text-foreground hover:bg-secondary",

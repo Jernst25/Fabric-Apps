@@ -1,4 +1,5 @@
 import { asNumber, asString } from "@/lib/dax";
+import { buildSwissHeldSet } from "./utils";
 
 export type Severity = "High" | "Medium" | "Low";
 
@@ -31,6 +32,7 @@ interface CovenantRow {
 
 interface BlotterRow {
     EntityName: string;
+    DealSrmId: string;
     Comment: string;
     LastModifiedDate: string;
     RealizedUnrealizedStatus: string;
@@ -45,6 +47,7 @@ export interface CompanyFlags {
     excluded: boolean;
     troubledCredit: boolean;
     euInvested: boolean;
+    swissHeld: boolean;
 }
 
 interface SecRow {
@@ -93,6 +96,7 @@ function normalizeCovenants(rows: Record<string, unknown>[]): CovenantRow[] {
 function normalizeBlotter(rows: Record<string, unknown>[]): BlotterRow[] {
     return rows.map((r) => ({
         EntityName: asString(r.EntityName),
+        DealSrmId: asString(r.DealSrmId),
         Comment: asString(r.Comment),
         LastModifiedDate: asString(r.LastModifiedDate),
         RealizedUnrealizedStatus: asString(r.RealizedUnrealizedStatus),
@@ -104,9 +108,13 @@ function normalizeBlotter(rows: Record<string, unknown>[]): BlotterRow[] {
     }));
 }
 
-/** Company-level (EntityName-keyed) flags for the Excluded/Troubled Credit/Region filters, shared across tabs. */
-export function buildCompanyFlags(rawBlotter: Record<string, unknown>[]): Map<string, CompanyFlags> {
+/** Company-level (EntityName-keyed) flags for the Excluded/Troubled Credit/Region/Swiss Held filters, shared across tabs. */
+export function buildCompanyFlags(
+    rawBlotter: Record<string, unknown>[],
+    rawPosition: Record<string, unknown>[],
+): Map<string, CompanyFlags> {
     const blotter = normalizeBlotter(rawBlotter);
+    const swissHeldSet = buildSwissHeldSet(rawPosition);
     const m = new Map<string, CompanyFlags>();
     for (const b of blotter) {
         if (!b.EntityName) continue;
@@ -114,6 +122,7 @@ export function buildCompanyFlags(rawBlotter: Record<string, unknown>[]): Map<st
             excluded: truthy(b.ExcludeFromReporting),
             troubledCredit: truthy(b.TroubledCredit),
             euInvested: truthy(b.EUInvested),
+            swissHeld: swissHeldSet.has(b.DealSrmId),
         });
     }
     return m;

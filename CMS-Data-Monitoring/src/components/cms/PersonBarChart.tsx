@@ -1,30 +1,38 @@
-import { VegaVisual, useCssTheme } from "@microsoft/fabric-visuals";
-import type { VisualizationSpec } from "@microsoft/fabric-visuals";
-
 export function PersonBarChart({
     title,
     data,
 }: {
     title: string;
-    data: { person: string; count: number }[];
+    data: { person: string; count: number; deals?: string[] }[];
 }) {
-    const theme = useCssTheme();
+    const max = Math.max(1, ...data.map((d) => d.count));
 
-    const spec: VisualizationSpec = {
-        $schema: "https://vega.github.io/schema/vega-lite/v6.json",
-        title,
-        data: { values: data },
-        mark: { type: "bar", cornerRadiusEnd: 3 },
-        encoding: {
-            y: { field: "person", type: "nominal", sort: "-x", title: null },
-            x: {
-                field: "count",
-                type: "quantitative",
-                title: "Deals",
-                axis: { tickMinStep: 1, format: "d" },
-            },
-        },
-    };
-
-    return <VegaVisual spec={spec} theme={theme} style={{ height: Math.max(160, data.length * 32 + 40) }} />;
+    return (
+        <div className="rounded-sm border border-border bg-card p-l">
+            <h3 className="text-400 font-semibold mb-m">{title}</h3>
+            <div className="space-y-m">
+                {[...data]
+                    .sort((a, b) => b.count - a.count)
+                    .map((d) => {
+                        const pct = (d.count / max) * 100;
+                        return (
+                            <div key={d.person}>
+                                <div className="flex items-center gap-m">
+                                    <span className="w-[120px] shrink-0 truncate text-300 text-muted-foreground">{d.person}</span>
+                                    <div className="flex-1 h-[10px] rounded-sm bg-muted overflow-hidden">
+                                        <div className="h-full rounded-sm bg-primary" style={{ width: `${pct}%` }} />
+                                    </div>
+                                    <span className="w-[24px] shrink-0 text-right text-300 font-bold">{d.count}</span>
+                                </div>
+                                {d.deals && d.deals.length > 0 && (
+                                    <div className="pl-[132px] text-100 text-muted-foreground leading-400">
+                                        {d.deals.join(", ")}
+                                    </div>
+                                )}
+                            </div>
+                        );
+                    })}
+            </div>
+        </div>
+    );
 }

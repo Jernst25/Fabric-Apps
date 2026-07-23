@@ -20,6 +20,7 @@ export function AnomalyBoard({
     const [ruleFilter, setRuleFilter] = useState<string>("All");
     const [troubledOnly, setTroubledOnly] = useState(false);
     const [excludedOnly, setExcludedOnly] = useState(false);
+    const [swissOnly, setSwissOnly] = useState(false);
     const [companyFilter, setCompanyFilter] = useState("");
 
     const ruleTypes = useMemo(() => [...new Set(anomalies.map((a) => a.type))].sort(), [anomalies]);
@@ -32,10 +33,11 @@ export function AnomalyBoard({
             // Opt-in inclusion gates: hidden unless the matching pill is turned on.
             if (!troubledOnly && flags?.troubledCredit) return false;
             if (!excludedOnly && flags?.excluded) return false;
+            if (swissOnly && !flags?.swissHeld) return false;
             if (companyFilter && !a.company.toLowerCase().includes(companyFilter.toLowerCase())) return false;
             return true;
         });
-    }, [anomalies, severityFilter, ruleFilter, troubledOnly, excludedOnly, companyFilter, companyFlags]);
+    }, [anomalies, severityFilter, ruleFilter, troubledOnly, excludedOnly, swissOnly, companyFilter, companyFlags]);
 
     const counts = {
         total: anomalies.length,
@@ -54,7 +56,7 @@ export function AnomalyBoard({
                 <select
                     value={ruleFilter}
                     onChange={(e) => setRuleFilter(e.target.value)}
-                    className="rounded-full border border-input bg-card px-l py-s text-300"
+                    className="rounded-sm border border-input bg-card px-m py-xs text-200"
                 >
                     <option value="All">All Rules</option>
                     {ruleTypes.map((r) => (
@@ -63,13 +65,14 @@ export function AnomalyBoard({
                 </select>
                 <FilterPill active={troubledOnly} onClick={() => setTroubledOnly((v) => !v)}>Troubled Credit</FilterPill>
                 <FilterPill active={excludedOnly} onClick={() => setExcludedOnly((v) => !v)}>Excluded</FilterPill>
+                <FilterPill active={swissOnly} onClick={() => setSwissOnly((v) => !v)}>Swiss Held</FilterPill>
                 <div className="relative ml-auto">
-                    <Search className="icon-size-200 absolute left-m top-1/2 -translate-y-1/2 text-muted-foreground" />
+                    <Search className="icon-size-100 absolute left-s top-1/2 -translate-y-1/2 text-muted-foreground" />
                     <input
                         value={companyFilter}
                         onChange={(e) => setCompanyFilter(e.target.value)}
                         placeholder="Search company…"
-                        className="rounded-full border border-input bg-card pl-[36px] pr-l py-s text-300 min-w-[220px]"
+                        className="rounded-sm border border-input bg-card pl-[28px] pr-m py-xs text-200 min-w-[220px]"
                     />
                 </div>
                 <span className="text-200 text-muted-foreground whitespace-nowrap">{filtered.length} anomalies shown</span>
@@ -82,7 +85,7 @@ export function AnomalyBoard({
                 <KpiCard label="Low" value={counts.Low} accent="low" subtext="click to isolate" onClick={() => setSeverityFilter("Low")} />
             </div>
 
-            <div className="rounded-xl border border-border bg-card overflow-auto">
+            <div className="rounded-sm border border-border bg-card overflow-auto">
                 {filtered.length === 0 ? (
                     <EmptyState message="No anomalies match the current filters." />
                 ) : (
@@ -114,6 +117,11 @@ export function AnomalyBoard({
                                                 {flags?.troubledCredit && (
                                                     <span className="text-200 rounded bg-[color:var(--color-sev-medium-bg)] text-[color:var(--color-sev-medium)] px-s py-xxs font-medium whitespace-nowrap">
                                                         TROUBLED CREDIT
+                                                    </span>
+                                                )}
+                                                {flags?.swissHeld && (
+                                                    <span className="text-200 rounded bg-muted text-muted-foreground px-s py-xxs font-medium whitespace-nowrap">
+                                                        SWISS HELD
                                                     </span>
                                                 )}
                                             </div>
