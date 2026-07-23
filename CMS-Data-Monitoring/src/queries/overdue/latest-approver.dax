@@ -1,0 +1,5 @@
+EVALUATE SUMMARIZECOLUMNS(
+  vw_financials_ApprovedUnapproved[EntityId],
+  "LatestApprovalDate", CALCULATE(MAX(vw_financials_ApprovedUnapproved[approvalDate])),
+  "LatestApprover", CALCULATE(MAXX(TOPN(1, vw_financials_ApprovedUnapproved, vw_financials_ApprovedUnapproved[approvalDate], DESC), vw_financials_ApprovedUnapproved[approverName]))
+)

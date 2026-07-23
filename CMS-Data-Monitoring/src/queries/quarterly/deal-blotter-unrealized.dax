@@ -1,0 +1,15 @@
+EVALUATE CALCULATETABLE(
+  SUMMARIZECOLUMNS(
+    'DealBlotter'[EntityName],
+    'DealBlotter'[DealSrmId],
+    'DealBlotter'[DealTeam],
+    'DealBlotter'[ProfessionalTeam],
+    'DealBlotter'[Comment],
+    'DealBlotter'[ExcludeFromReporting],
+    'DealBlotter'[AtCloseDate],
+    'DealBlotter'[TroubledCredit],
+    'DealBlotter'[EU Invested]
+  ),
+  'DealBlotter'[Realized/Unrealized] = "Unrealized"
+)
+ORDER BY 'DealBlotter'[EntityName]

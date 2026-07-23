@@ -1,0 +1,4 @@
+EVALUATE SUMMARIZECOLUMNS(
+  'Unapproved Financials - Last 12 Periods'[EntityName],
+  'Unapproved Financials - Last 12 Periods'[AsOfDate]
+)

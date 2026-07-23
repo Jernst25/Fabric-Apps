@@ -1,0 +1,21 @@
+EVALUATE SELECTCOLUMNS(
+  DealBlotter,
+  "DealSrmId",                  DealBlotter[DealSrmId],
+  "EntityId",                   DealBlotter[EntityId],
+  "EntityName",                 DealBlotter[EntityName],
+  "RealizedUnrealizedStatus",   DealBlotter[RealizedUnrealizedStatus],
+  "ExcludeFromReporting",       DealBlotter[ExcludeFromReporting],
+  "LastExpectedFinancialsDate", DealBlotter[LastExpectedFinancialsDate],
+  "MonthlyDelayDays",           DealBlotter[MonthlyDelayDays],
+  "QuarterlyDelayDays",         DealBlotter[QuarterlyDelayDays],
+  "DealProfessional1",          DealBlotter[Deal Professional 1],
+  "DealProfessional2",          DealBlotter[Deal Professional 2],
+  "DealProfessional3",          DealBlotter[Deal Professional 3],
+  "DealProfessional4",          DealBlotter[Deal Professional 4],
+  "DealProfessional5",          DealBlotter[Deal Professional 5],
+  "DealProfessional6",          DealBlotter[Deal Professional 6],
+  "DealTeam",                   DealBlotter[DealTeam],
+  "Comment",                    DealBlotter[Comment],
+  "EUInvested",                 DealBlotter[EU Invested],
+  "TroubledCredit",             DealBlotter[TroubledCredit]
+)

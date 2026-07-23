@@ -1,0 +1,14 @@
+EVALUATE CALCULATETABLE(
+  SUMMARIZECOLUMNS(
+    'Position Table'[Investment Deal SRM ID],
+    'Position Table'[Fund]
+  ),
+  TREATAS(
+    CALCULATETABLE(
+      SUMMARIZECOLUMNS('DealBlotter'[DealSrmId]),
+      'DealBlotter'[Realized/Unrealized] = "Unrealized"
+    ),
+    'Position Table'[Investment Deal SRM ID]
+  ),
+  'Position Table'[Funded Qty] > 0
+)

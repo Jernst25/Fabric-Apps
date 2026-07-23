@@ -1,0 +1,220 @@
+@import "tailwindcss";
+
+@custom-variant dark (&:is(.dark *));
+
+/* Bridged tokens — kept in `@theme static` so the CSS vars are always
+   emitted, not tree-shaken when no Tailwind utility consumes them.
+   Required because <VegaVisual> and <DataGrid> read these at runtime via
+   `useCssTheme()` and project them into a JS theme object (Vega's SVG output
+   cannot resolve `var()` references). */
+@theme static {
+  --color-brand:            #00457A;  /* bar/area fills, button-like brand surfaces */
+  --color-brand-foreground: #00457A;  /* line/point marks, branded text & emphasis */
+  --color-hover:            #DBE7F6;  /* row/cell hover surface in DataGrid + visuals */
+
+  /* CMS status/severity colors — functional state indicators, not brand palette */
+  --color-sev-high:      #B42318;
+  --color-sev-high-bg:   #FEE2E2;
+  --color-sev-medium:    #92400E;
+  --color-sev-medium-bg: #FEF3C7;
+  --color-sev-low:       #14532D;
+  --color-sev-low-bg:    #DCFCE7;
+  --color-status-not-loaded:      #1D4ED8;
+  --color-status-not-loaded-bg:   #DBEAFE;
+  --color-status-not-approved:    #B42318;
+  --color-status-not-approved-bg: #FEE2E2;
+  --color-status-approved:        #166534;
+  --color-status-approved-bg:     #DCFCE7;
+  --color-alert:    #92400E;
+  --color-alert-bg: #FFF7ED;
+}
+
+@theme {
+  /* Color tokens — light theme
+     Usage: bg-*, text-*, border-* (e.g. bg-primary text-primary-foreground)
+     Each token has a -foreground pair for text on that surface. */
+  --color-background: #F1F2F7;                                       /* page background — H.I.G. Light Gray */
+  --color-foreground: #0C1B2E;                                       /* default text — H.I.G. Dark Blue */
+
+  --color-card: #ffffff;                                             /* card surfaces */
+  --color-card-foreground: #0C1B2E;
+
+  --color-popover: #ffffff;                                          /* popover/dropdown surfaces */
+  --color-popover-foreground: #0C1B2E;
+
+  --color-primary: #00457A;                                          /* primary actions & buttons — H.I.G. Blue */
+  --color-primary-foreground: #ffffff;
+
+  --color-secondary: #F1F2F7;                                        /* secondary actions */
+  --color-secondary-foreground: #0C1B2E;
+
+  --color-muted: #DBE7F6;                                            /* subtle backgrounds — Subtle Blue Tint */
+  --color-muted-foreground: #4B5768;                                 /* subdued text */
+
+  --color-accent: #FF782E;                                           /* accent highlights — H.I.G. Orange (sparingly) */
+  --color-accent-foreground: #ffffff;
+
+  --color-destructive: #B42318;                                      /* errors & destructive actions */
+  --color-destructive-foreground: #ffffff;
+
+  --color-border: #E3E7EF;                                           /* default border */
+  --color-input: #C7CEDB;                                            /* input field borders */
+  --color-ring: #00457A;                                             /* focus rings */
+
+  --radius-none: 0;
+  --radius-sm: 2px;
+  --radius-md: 4px;
+  --radius-lg: 6px;
+  --radius-xl: 8px;
+  --radius-2xl: 12px;
+  --radius-3xl: 16px;
+  --radius-4xl: 24px;
+  --radius-5xl: 32px;
+  --radius-6xl: 40px;
+  --radius-full: 9999px;
+  --radius: 4px;
+
+    /* Spacing — 4px baseline grid 
+      Usage: p-*, m-*, gap-* (e.g. p-l gap-m) */
+  --spacing-none: 0;
+  --spacing-xxs: 2px;
+  --spacing-xs: 4px;
+  --spacing-s-nudge: 6px;
+  --spacing-s: 8px;
+  --spacing-m-nudge: 10px;
+  --spacing-m: 12px;
+  --spacing-l: 16px;
+  --spacing-xl: 20px;
+  --spacing-xxl: 24px;
+  --spacing-xxxl: 32px;
+
+  /* Font Sizes — 100-based scale 
+     Usage: text-* (e.g. text-300, text-hero-900) */
+  --text-100: 10px;
+  --text-200: 12px;
+  --text-300: 14px;
+  --text-400: 16px;
+  --text-500: 20px;
+  --text-600: 24px;
+  --text-hero-700: 28px;
+  --text-hero-800: 32px;
+  --text-hero-900: 40px;
+  --text-hero-1000: 68px;
+
+  /* Line Heights — paired with font sizes
+     Usage: leading-* (e.g. leading-300) */
+  --leading-100: 14px;
+  --leading-200: 16px;
+  --leading-300: 20px;
+  --leading-400: 22px;
+  --leading-500: 28px;
+  --leading-600: 32px;
+  --leading-hero-700: 36px;
+  --leading-hero-800: 40px;
+  --leading-hero-900: 52px;
+  --leading-hero-1000: 92px;
+
+  /* Font Weights
+     Usage: font-* (e.g. font-semibold) */
+  --font-weight-regular: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
+
+  /* Font Families
+     Usage: font-* (e.g. font-heading, font-base) */
+  --font-heading: 'Source Sans 3', 'Source Sans Pro',                /* headings, titles, display text */
+    Arial, -apple-system, BlinkMacSystemFont, Roboto, sans-serif;
+  --font-base: 'Source Sans 3', 'Source Sans Pro',                   /* body text, labels, UI controls */
+    Arial, -apple-system, BlinkMacSystemFont, Roboto, sans-serif;
+  --font-monospace: Consolas, 'Courier New', Courier, monospace;     /* code, pre-formatted text */
+  --font-numeric: 'Source Sans 3', 'Source Sans Pro',                /* KPI values, numeric displays */
+    Arial, -apple-system, BlinkMacSystemFont, Roboto, sans-serif;
+
+  /* Icon Sizes — 100-based scale
+     Usage: icon-size-* custom utility (e.g. icon-size-200) */
+  --icon-size-100: 12px;
+  --icon-size-200: 16px;
+  --icon-size-300: 20px;
+  --icon-size-400: 24px;
+  --icon-size-500: 28px;
+  --icon-size-600: 32px;
+  --icon-size-700: 48px;
+}
+
+@utility icon-size-* {
+  width: --value(--icon-size-*);
+  height: --value(--icon-size-*);
+}
+
+@layer base {
+  .dark {
+    /* Color tokens — dark theme */
+    --color-background: #0C1B2E;
+    --color-foreground: #ffffff;
+
+    --color-card: #122A46;
+    --color-card-foreground: #ffffff;
+
+    --color-popover: #122A46;
+    --color-popover-foreground: #ffffff;
+
+    --color-primary: #4A90D9;
+    --color-primary-foreground: #0C1B2E;
+
+    --color-secondary: #16324F;
+    --color-secondary-foreground: #ffffff;
+
+    --color-muted: #16324F;
+    --color-muted-foreground: #A9B7C9;
+
+    --color-accent: #FF782E;
+    --color-accent-foreground: #0C1B2E;
+
+    --color-destructive: #F87171;
+    --color-destructive-foreground: #0C1B2E;
+
+    --color-border: #26405E;
+    --color-input: #26405E;
+    --color-ring: #4A90D9;
+
+    --color-brand:            #4A90D9;
+    --color-brand-foreground: #4A90D9;
+    --color-hover:            #16324F;
+
+    --color-sev-high:      #FCA5A5;
+    --color-sev-high-bg:   #4A1D1D;
+    --color-sev-medium:    #FCD34D;
+    --color-sev-medium-bg: #4A3A0F;
+    --color-sev-low:       #86EFAC;
+    --color-sev-low-bg:    #103A20;
+    --color-status-not-loaded:      #93C5FD;
+    --color-status-not-loaded-bg:   #1E3A5F;
+    --color-status-not-approved:    #FCA5A5;
+    --color-status-not-approved-bg: #4A1D1D;
+    --color-status-approved:        #86EFAC;
+    --color-status-approved-bg:     #103A20;
+    --color-alert:    #FCD34D;
+    --color-alert-bg: #3A2A0F;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground antialiased;
+  }
+
+  select, input, textarea, button {
+    font-family: inherit;
+  }
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}

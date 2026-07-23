@@ -1,0 +1,9 @@
+EVALUATE CALCULATETABLE(
+  SUMMARIZECOLUMNS(
+    vw_financials_ApprovedUnapproved[EntityId],
+    vw_financials_ApprovedUnapproved[Event],
+    vw_financials_ApprovedUnapproved[PeriodType],
+    vw_financials_ApprovedUnapproved[AsOfDate]
+  ),
+  vw_financials_ApprovedUnapproved[Approved] = "1"
+)

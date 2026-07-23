@@ -1,0 +1,11 @@
+EVALUATE SELECTCOLUMNS(DealBlotter,
+  "EntityName",             DealBlotter[EntityName],
+  "Comment",                DealBlotter[Comment],
+  "LastModifiedDate",       DealBlotter[LastModifiedDate],
+  "RealizedUnrealizedStatus", DealBlotter[RealizedUnrealizedStatus],
+  "ExcludeFromReporting",   DealBlotter[ExcludeFromReporting],
+  "EntityNotInFinancials",  DealBlotter[EntityNotInFinancials],
+  "InvestmentDealFullCode", DealBlotter[InvestmentDeal-Issuer.Investment Deal full Code],
+  "TroubledCredit",         DealBlotter[TroubledCredit],
+  "EUInvested",             DealBlotter[EU Invested]
+)

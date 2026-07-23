@@ -1,0 +1,17 @@
+EVALUATE SELECTCOLUMNS(
+  CALCULATETABLE(
+    Financials,
+    Financials[Level0] IN {
+      "TTM Adj EBITDA","TTM WH Adj EBITDA","Revenue",
+      "Net Leverage At Face","Net Leverage Through Class At Face",
+      "Interest Coverage","FCCR","EV Multiple"
+    }
+  ),
+  "EntityName",  Financials[EntityName],
+  "Period",      Financials[Period],
+  "DateKey",     Financials[_DateKey],
+  "PeriodType",  Financials[PeriodType],
+  "Event",       Financials[Event],
+  "Level0",      Financials[Level0],
+  "Value",       Financials[Value]
+)

@@ -1,0 +1,12 @@
+EVALUATE CALCULATETABLE(
+  SUMMARIZECOLUMNS(
+    Financials[EntityName],
+    Financials[Period],
+    Financials[Approved],
+    "LatestApprover", CALCULATE(MAXX(TOPN(1, Financials, Financials[approvalDate], DESC), Financials[approverName]))
+  ),
+  Financials[Period] IN {
+    "Sep 2025","Dec 2025","Mar 2026","Jun 2026",
+    "Q3 2025","Q4 2025","Q1 2026","Q2 2026"
+  }
+)

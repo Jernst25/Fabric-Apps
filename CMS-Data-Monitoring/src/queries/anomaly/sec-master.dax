@@ -1,0 +1,7 @@
+EVALUATE SELECTCOLUMNS(
+  FILTER(SecMasterDailyView, SecMasterDailyView[Has Position] = TRUE()),
+  "SecurityID",   SecMasterDailyView[Security ID],
+  "SecurityName", SecMasterDailyView[Security Name],
+  "DealCode",     SecMasterDailyView[Investment Deal Full Code],
+  "IsInactive",   SecMasterDailyView[Is Inactive Security]
+)

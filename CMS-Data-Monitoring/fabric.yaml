@@ -1,0 +1,7 @@
+activeProfile: default
+profiles:
+  default:
+    semanticModels:
+      cmsData:
+        workspaceId: 24737d38-e690-47bc-8dda-43af0fabc477
+        itemId: 142c724e-e250-4901-ac2f-a8c29503acd4
