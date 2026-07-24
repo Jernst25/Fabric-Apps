@@ -8,6 +8,7 @@ services:
       enabled: true
     allowedRedirectUris:
       - http://localhost:5173
+      - https://tame-falls-662beb0ac0-northcentralus.webapp.fabricapps.net
   data:
     enabled: false
   storage:
@@ -17,3 +18,5 @@ services:
     folder: dist
     buildCommand: npm run build:fabric
     indexDocument: index.html
+  functions:
+    enabled: false
