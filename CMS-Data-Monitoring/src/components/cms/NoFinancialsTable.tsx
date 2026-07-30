@@ -8,7 +8,7 @@ export function NoFinancialsTable({ deals }: { deals: NoFinancialsDeal[] }) {
     return (
         <div className="rounded-sm border border-border bg-card overflow-hidden">
             <div className="px-l py-m border-b border-border">
-                <h3 className="text-400 font-semibold">Deals with No Financials</h3>
+                <h3 className="text-400 font-semibold">New Deals with No Financials</h3>
                 <p className="text-200 text-muted-foreground mt-xxs">
                     Review surface, not an overdue count — some entries may be non-reporting vehicles. Confirm before treating as a genuine gap.
                 </p>

@@ -159,9 +159,10 @@ export function OverdueTab({ data }: { data: OverdueResult }) {
                             if (realizedFilter === "Unrealized" && d.realized) return false;
                             if (realizedFilter === "Realized" && !d.realized) return false;
                             if (criticalOnly && d.maxDays < 120) return false;
-                            // These two are opt-in inclusion gates: the deal is hidden unless the
-                            // matching pill is turned on (not an "isolate to only this" toggle).
-                            if (!troubledOnly && d.troubledCredit) return false;
+                            // Troubled Credit deals are always included by default — the pill
+                            // excludes them when turned on. Excluded is the opposite: an opt-in
+                            // inclusion gate, hidden unless its pill is turned on.
+                            if (troubledOnly && d.troubledCredit) return false;
                             if (!excludedOnly && d.excluded) return false;
                             if (swissOnly && !d.swissHeld) return false;
                             if (d.maxDays < minDays) return false;
@@ -203,7 +204,7 @@ export function OverdueTab({ data }: { data: OverdueResult }) {
         if (realizedFilter === "Realized") return []; // No Financials deals are always Unrealized
         if (periodFilter !== "All") return []; // No Financials deals aren't tied to a specific period
         return data.noFinancials.filter((d) => {
-            if (!troubledOnly && d.troubledCredit) return false;
+            if (troubledOnly && d.troubledCredit) return false;
             if (!excludedOnly && d.excluded) return false;
             if (swissOnly && !d.swissHeld) return false;
             if (search) {

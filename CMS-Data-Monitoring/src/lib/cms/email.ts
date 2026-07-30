@@ -15,7 +15,6 @@ export interface EmailInput {
 }
 
 const CLOSING = "If there are any issues or delays, please let me know so I can update the blotter accordingly.";
-const SIGN_OFF = "Juana Ernst / Credit Monitoring · H.I.G. Capital";
 
 const INTROS: Record<EmailStatus, string> = {
     "Not Loaded": "I'm following up on the financial statements below that are still outstanding in CMS. Could you please upload these at your earliest convenience?",
@@ -51,8 +50,6 @@ export function buildEmailText(input: EmailInput): string {
         ...input.deals.map((d) => `- ${d.deal}: ${d.detail}`),
         "",
         CLOSING,
-        "",
-        SIGN_OFF,
     ];
     return lines.join("\n");
 }
@@ -74,7 +71,6 @@ export function buildEmailHtml(input: EmailInput): string {
         <tbody>${rows}</tbody>
       </table>
       <p>${esc(CLOSING)}</p>
-      <p>${esc(SIGN_OFF)}</p>
     </div>`;
 }
 
@@ -103,7 +99,7 @@ export async function renderEmailCanvas(input: EmailInput): Promise<HTMLCanvasEl
     const headerHeight = 100;
     const bodyPadding = 32;
     const introLines = 3;
-    const height = headerHeight + bodyPadding * 2 + introLines * 20 + 40 + input.deals.length * rowHeight + 90;
+    const height = headerHeight + bodyPadding * 2 + introLines * 20 + 40 + input.deals.length * rowHeight + 70;
 
     const canvas = document.createElement("canvas");
     canvas.width = width * scale;
@@ -186,10 +182,6 @@ export async function renderEmailCanvas(input: EmailInput): Promise<HTMLCanvasEl
         ctx.fillText(line, 24, y);
         y += 20;
     }
-    y += 10;
-    ctx.font = "600 13px 'Source Sans 3', Arial, sans-serif";
-    ctx.fillStyle = HIG_BLUE;
-    ctx.fillText(SIGN_OFF, 24, y);
 
     return canvas;
 }

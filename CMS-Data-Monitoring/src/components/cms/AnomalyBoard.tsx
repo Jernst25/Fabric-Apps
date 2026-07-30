@@ -30,8 +30,9 @@ export function AnomalyBoard({
             if (severityFilter !== "All" && a.severity !== severityFilter) return false;
             if (ruleFilter !== "All" && a.type !== ruleFilter) return false;
             const flags = companyFlags.get(a.company);
-            // Opt-in inclusion gates: hidden unless the matching pill is turned on.
-            if (!troubledOnly && flags?.troubledCredit) return false;
+            // Troubled Credit companies are always included by default — the pill excludes them
+            // when turned on. Excluded is the opposite: an opt-in inclusion gate, hidden unless on.
+            if (troubledOnly && flags?.troubledCredit) return false;
             if (!excludedOnly && flags?.excluded) return false;
             if (swissOnly && !flags?.swissHeld) return false;
             if (companyFilter && !a.company.toLowerCase().includes(companyFilter.toLowerCase())) return false;

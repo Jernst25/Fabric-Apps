@@ -1,5 +1,4 @@
 import type { OverdueResult } from "@/lib/cms/overdue";
-import type { QuarterlyResult } from "@/lib/cms/quarterly";
 
 function personWithMaxDays(overdue: OverdueResult): string | null {
     let best: { person: string; days: number } | null = null;
@@ -22,22 +21,15 @@ function StatBlock({ value, label, color }: { value: string; label: string; colo
 
 export function ExecutiveSnapshotBanner({
     overdue,
-    quarterly,
-    quarterLabel,
     periodLabel,
 }: {
     overdue: OverdueResult;
-    quarterly: QuarterlyResult;
-    quarterLabel: string;
     /** Formatted date of the specific period selected on the page (e.g. "3/31/2026"), or null when "All Periods" is selected. */
     periodLabel: string | null;
 }) {
     const totalPeriods = overdue.notLoadedPeriods + overdue.notApprovedPeriods;
     const peopleCount = new Set([...overdue.notLoaded, ...overdue.notApproved].map((g) => g.person)).size;
     const maxPerson = personWithMaxDays(overdue);
-    const pctComplete = quarterly.dealsInQuarter > 0
-        ? ((quarterly.dealsInQuarter - quarterly.notLoadedCount - quarterly.notApprovedCount) / quarterly.dealsInQuarter) * 100
-        : 0;
 
     return (
         <div className="rounded-sm bg-[color:var(--color-foreground)] border-l-4 border-accent px-xl py-l flex flex-wrap items-center justify-between gap-l">
@@ -50,14 +42,13 @@ export function ExecutiveSnapshotBanner({
                     {maxPerson && (
                         <> — longest outstanding <strong>{overdue.maxDaysOverdue} days</strong> ({maxPerson})</>
                     )}
-                    . {quarterLabel} fund reporting is <strong>{pctComplete.toFixed(1)}% complete</strong>.
+                    .
                 </p>
             </div>
             <div className="flex items-center divide-x divide-white/15">
                 <StatBlock value={String(overdue.totalDealsOverdue)} label="Deals" color="#ffffff" />
                 <StatBlock value={String(overdue.notLoadedPeriods)} label="Not Loaded" color="var(--color-accent)" />
                 <StatBlock value={String(overdue.notApprovedPeriods)} label="Not Approved" color="#F87171" />
-                <StatBlock value={`${pctComplete.toFixed(0)}%`} label={`${quarterLabel} Done`} color="var(--color-status-approved)" />
             </div>
         </div>
     );

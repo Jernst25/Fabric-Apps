@@ -1,12 +1,12 @@
 import { useMemo, useState } from "react";
-import { Search } from "lucide-react";
+import { AlertTriangle, Search } from "lucide-react";
 import type { DealEntry, NoFinancialsDeal, OverdueResult, PersonGroup } from "@/lib/cms/overdue";
-import type { QFDealEntry, QFDealView, QFPersonGroup, QuarterlyResult } from "@/lib/cms/quarterly";
 import { KpiCard } from "./KpiCard";
 import { PersonBarChart } from "./PersonBarChart";
 import { FilterPill } from "./FilterPill";
 import { FilterRibbon } from "./FilterRibbon";
 import { ExecutiveSnapshotBanner } from "./ExecutiveSnapshotBanner";
+import { NoFinancialsTable } from "./NoFinancialsTable";
 
 const REGION_FILTERS = ["All", "DL Europe", "DL US"];
 const REALIZED_FILTERS = ["All", "Unrealized", "Realized"] as const;
@@ -31,7 +31,9 @@ function matchesCommonFlags(
 ): boolean {
     if (f.regionFilter === "DL Europe" && !d.euInvested) return false;
     if (f.regionFilter === "DL US" && d.euInvested) return false;
-    if (!f.troubledOnly && d.troubledCredit) return false;
+    // Troubled Credit deals are always included by default — the pill excludes them when turned
+    // on. Excluded is the opposite: an opt-in inclusion gate, hidden unless its pill is turned on.
+    if (f.troubledOnly && d.troubledCredit) return false;
     if (!f.excludedOnly && d.excluded) return false;
     if (f.swissOnly && !d.swissHeld) return false;
     return true;
@@ -85,7 +87,7 @@ function filterOverdue(overdue: OverdueResult, f: SharedFilters): OverdueResult 
     const noFinancials: NoFinancialsDeal[] = f.periodFilter !== "All" || f.realizedFilter === "Realized" || f.regionFilter !== "All"
         ? []
         : overdue.noFinancials.filter((d) => {
-            if (!f.troubledOnly && d.troubledCredit) return false;
+            if (f.troubledOnly && d.troubledCredit) return false;
             if (!f.excludedOnly && d.excluded) return false;
             if (f.swissOnly && !d.swissHeld) return false;
             if (f.search) {
@@ -109,7 +111,7 @@ function filterOverdue(overdue: OverdueResult, f: SharedFilters): OverdueResult 
         noFinancials,
         // StatusRow carries no region data — only Troubled Credit/Excluded/Swiss Held apply here.
         statusRows: overdue.statusRows.filter((r) =>
-            (f.troubledOnly || !r.troubledCredit) && (f.excludedOnly || !r.excluded) && (!f.swissOnly || r.swissHeld),
+            (!f.troubledOnly || !r.troubledCredit) && (f.excludedOnly || !r.excluded) && (!f.swissOnly || r.swissHeld),
         ),
         alerts,
         totalDealsOverdue: allDeals.size,
@@ -119,47 +121,10 @@ function filterOverdue(overdue: OverdueResult, f: SharedFilters): OverdueResult 
     };
 }
 
-function filterQuarterly(quarterly: QuarterlyResult, f: SharedFilters): QuarterlyResult {
-    function matchesEntry(d: QFDealEntry, person: string): boolean {
-        if (!matchesCommonFlags(d, f)) return false;
-        if (f.search) {
-            const q = f.search.toLowerCase();
-            if (!d.deal.toLowerCase().includes(q) && !person.toLowerCase().includes(q)) return false;
-        }
-        return true;
-    }
-    function matchesView(d: QFDealView): boolean {
-        if (!matchesCommonFlags(d, f)) return false;
-        if (f.search && !d.deal.toLowerCase().includes(f.search.toLowerCase())) return false;
-        return true;
-    }
-    function filterGroups(groups: QFPersonGroup[]): QFPersonGroup[] {
-        return groups
-            .map((g) => ({ ...g, deals: g.deals.filter((d) => matchesEntry(d, g.person)) }))
-            .filter((g) => g.deals.length > 0);
-    }
-
-    const deals = quarterly.deals.filter(matchesView);
-    return {
-        deals,
-        notLoaded: filterGroups(quarterly.notLoaded),
-        notApproved: filterGroups(quarterly.notApproved),
-        dealsInQuarter: deals.length,
-        notLoadedCount: deals.filter((d) => d.status === "not_loaded").length,
-        notApprovedCount: deals.filter((d) => d.status === "not_approved").length,
-        quarterEndDate: quarterly.quarterEndDate,
-        funds: quarterly.funds,
-    };
-}
-
 export function ExecutiveSummaryTab({
     overdue,
-    quarterly,
-    quarterLabel,
 }: {
     overdue: OverdueResult;
-    quarterly: QuarterlyResult;
-    quarterLabel: string;
 }) {
     const [regionFilter, setRegionFilter] = useState("All");
     const [realizedFilter, setRealizedFilter] = useState<RealizedFilter>("All");
@@ -186,7 +151,6 @@ export function ExecutiveSummaryTab({
     }, [overdue]);
 
     const filteredOverdue = useMemo(() => filterOverdue(overdue, filters), [overdue, filters]);
-    const filteredQuarterly = useMemo(() => filterQuarterly(quarterly, filters), [quarterly, filters]);
 
     const periodLabel = useMemo(() => {
         if (periodFilter === "All") return null;
@@ -198,11 +162,13 @@ export function ExecutiveSummaryTab({
         person: g.person,
         count: g.deals.length,
         deals: g.deals.map((d) => d.deal),
+        hasComment: g.deals.some((d) => d.comment),
     }));
     const overdueNotApprovedChart = filteredOverdue.notApproved.map((g) => ({
         person: g.person,
         count: g.deals.length,
         deals: g.deals.map((d) => d.deal),
+        hasComment: g.deals.some((d) => d.comment),
     }));
 
     return (
@@ -257,8 +223,6 @@ export function ExecutiveSummaryTab({
 
             <ExecutiveSnapshotBanner
                 overdue={filteredOverdue}
-                quarterly={filteredQuarterly}
-                quarterLabel={quarterLabel}
                 periodLabel={periodLabel}
             />
 
@@ -272,10 +236,29 @@ export function ExecutiveSummaryTab({
                 </div>
             </div>
 
+            {filteredOverdue.alerts.length > 0 && (
+                <div className="rounded-sm border border-[color:var(--color-alert)]/30 bg-[color:var(--color-alert-bg)] px-m py-xs space-y-xxs">
+                    <div className="flex items-center gap-xs font-semibold text-100 text-[color:var(--color-alert)]">
+                        <AlertTriangle className="icon-size-100" />
+                        Hold emails — {filteredOverdue.alerts.length} deal{filteredOverdue.alerts.length === 1 ? "" : "s"} with active blotter comments
+                    </div>
+                    <ul className="text-100 space-y-xxs">
+                        {filteredOverdue.alerts.map((a, i) => (
+                            <li key={i}>
+                                <span className="font-medium">{a.deal}</span> ({a.person}): {a.comment}
+                            </li>
+                        ))}
+                    </ul>
+                </div>
+            )}
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-m">
                 {overdueNotLoadedChart.length > 0 && <PersonBarChart title="Overdue: Not Loaded by associate" data={overdueNotLoadedChart} />}
                 {overdueNotApprovedChart.length > 0 && <PersonBarChart title="Overdue: Not Approved by approver" data={overdueNotApprovedChart} />}
             </div>
+
+            {/* Always shows every deal with no financials, regardless of the page's filters. */}
+            <NoFinancialsTable deals={overdue.noFinancials} />
         </div>
     );
 }

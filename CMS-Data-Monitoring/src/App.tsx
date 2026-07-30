@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { PieChart, Smartphone, Wallet, Radar } from "lucide-react";
 import { useCmsData } from "@/hooks/use-cms-data";
-import { QUARTERS } from "@/lib/cms/quarterly";
 import { Header } from "@/components/cms/Header";
 import { SideNav, type NavItemDef } from "@/components/cms/SideNav";
 import { ExecutiveSummaryTab } from "@/components/cms/ExecutiveSummaryTab";
@@ -15,7 +14,7 @@ type TabId = "executive" | "overdue" | "quarterly" | "anomaly";
 const TAB_META: Record<TabId, { eyebrow: string; title: string }> = {
     executive: { eyebrow: "Overview", title: "Executive Summary" },
     overdue: { eyebrow: "Accountability", title: "Overdue Financials" },
-    quarterly: { eyebrow: "Reporting Risk", title: "Quarterly FS by Fund" },
+    quarterly: { eyebrow: "Reporting Risk", title: "Financials Status by Fund" },
     anomaly: { eyebrow: "Data Quality", title: "Data Anomaly Board" },
 };
 
@@ -23,14 +22,13 @@ function App() {
     const [activeTab, setActiveTab] = useState<TabId>("executive");
     const { isLoading, error, anomalies, companyFlags, overdue, quarterly, quarterIndex, setQuarterIndex, refetch } = useCmsData();
 
-    const quarterLabel = QUARTERS[quarterIndex].label;
     const ready = anomalies && overdue && quarterly;
     const activeMeta = TAB_META[activeTab];
 
     const navItems: NavItemDef[] = [
         { id: "executive", label: "Executive Summary", icon: PieChart },
         { id: "overdue", label: "Overdue Financials", icon: Smartphone },
-        { id: "quarterly", label: "Quarterly FS by Fund", icon: Wallet },
+        { id: "quarterly", label: "Financials Status by Fund", icon: Wallet },
         { id: "anomaly", label: "Data Anomaly Board", icon: Radar },
     ];
 
@@ -49,11 +47,7 @@ function App() {
                         ) : (
                             <>
                                 {activeTab === "executive" && (
-                                    <ExecutiveSummaryTab
-                                        overdue={overdue}
-                                        quarterly={quarterly}
-                                        quarterLabel={quarterLabel}
-                                    />
+                                    <ExecutiveSummaryTab overdue={overdue} />
                                 )}
                                 {activeTab === "overdue" && <OverdueTab data={overdue} />}
                                 {activeTab === "quarterly" && (
