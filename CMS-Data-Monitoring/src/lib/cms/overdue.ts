@@ -19,6 +19,8 @@ import {
 
 const DEFAULT_MONTHLY_DELAY_DAYS = 30;
 const DEFAULT_QUARTERLY_DELAY_DAYS = 45;
+/** Grace period added on top of a deal's delay days before a period counts as overdue. */
+const OVERDUE_BUFFER_DAYS = 15;
 
 const LOOKBACK = 12;
 const PERIODIC_EVENTS = new Set(["Periodic", "Add On"]);
@@ -235,10 +237,16 @@ function detectCadence(approvedRows: ResolvedPeriodRow[], unapprovedRows: Resolv
     return null;
 }
 
-/** MonthlyDelayDays/QuarterlyDelayDays of 0 (explicit or blank) default to 30/45 respectively. */
+/**
+ * MonthlyDelayDays/QuarterlyDelayDays of 0 (explicit or blank) default to
+ * 30/45 respectively, plus a 15-day overdue buffer added on top of either —
+ * a period isn't overdue until it's past its delay days *and* the buffer.
+ */
 function effectiveDelay(cadence: Cadence, deal: RosterRow): number {
-    if (cadence === "Monthly") return deal.monthlyDelayDays > 0 ? deal.monthlyDelayDays : DEFAULT_MONTHLY_DELAY_DAYS;
-    return deal.quarterlyDelayDays > 0 ? deal.quarterlyDelayDays : DEFAULT_QUARTERLY_DELAY_DAYS;
+    const base = cadence === "Monthly"
+        ? (deal.monthlyDelayDays > 0 ? deal.monthlyDelayDays : DEFAULT_MONTHLY_DELAY_DAYS)
+        : (deal.quarterlyDelayDays > 0 ? deal.quarterlyDelayDays : DEFAULT_QUARTERLY_DELAY_DAYS);
+    return base + OVERDUE_BUFFER_DAYS;
 }
 
 /**
