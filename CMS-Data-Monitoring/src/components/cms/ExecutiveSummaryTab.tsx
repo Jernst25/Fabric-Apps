@@ -31,10 +31,10 @@ function matchesCommonFlags(
 ): boolean {
     if (f.regionFilter === "DL Europe" && !d.euInvested) return false;
     if (f.regionFilter === "DL US" && d.euInvested) return false;
-    // Troubled Credit deals are always included by default — the pill excludes them when turned
-    // on. Excluded is the opposite: an opt-in inclusion gate, hidden unless its pill is turned on.
+    // Troubled Credit and Excluded deals are both included by default — either pill excludes
+    // them when turned on.
     if (f.troubledOnly && d.troubledCredit) return false;
-    if (!f.excludedOnly && d.excluded) return false;
+    if (f.excludedOnly && d.excluded) return false;
     if (f.swissOnly && !d.swissHeld) return false;
     return true;
 }
@@ -88,7 +88,7 @@ function filterOverdue(overdue: OverdueResult, f: SharedFilters): OverdueResult 
         ? []
         : overdue.noFinancials.filter((d) => {
             if (f.troubledOnly && d.troubledCredit) return false;
-            if (!f.excludedOnly && d.excluded) return false;
+            if (f.excludedOnly && d.excluded) return false;
             if (f.swissOnly && !d.swissHeld) return false;
             if (f.search) {
                 const q = f.search.toLowerCase();
@@ -111,7 +111,7 @@ function filterOverdue(overdue: OverdueResult, f: SharedFilters): OverdueResult 
         noFinancials,
         // StatusRow carries no region data — only Troubled Credit/Excluded/Swiss Held apply here.
         statusRows: overdue.statusRows.filter((r) =>
-            (!f.troubledOnly || !r.troubledCredit) && (f.excludedOnly || !r.excluded) && (!f.swissOnly || r.swissHeld),
+            (!f.troubledOnly || !r.troubledCredit) && (!f.excludedOnly || !r.excluded) && (!f.swissOnly || r.swissHeld),
         ),
         alerts,
         totalDealsOverdue: allDeals.size,

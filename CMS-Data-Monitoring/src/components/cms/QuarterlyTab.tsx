@@ -120,10 +120,10 @@ export function QuarterlyTab({
         if (fundFilter !== "All" && !d.funds.includes(fundFilter)) return false;
         if (regionFilter === "DL Europe" && !d.euInvested) return false;
         if (regionFilter === "DL US" && d.euInvested) return false;
-        // Troubled Credit deals are always included by default — the pill excludes them when
-        // turned on. Excluded is the opposite: an opt-in inclusion gate, hidden unless turned on.
+        // Troubled Credit and Excluded deals are both included by default — either pill excludes
+        // them when turned on.
         if (troubledOnly && d.troubledCredit) return false;
-        if (!excludedOnly && d.excluded) return false;
+        if (excludedOnly && d.excluded) return false;
         if (swissOnly && !d.swissHeld) return false;
         if (search) {
             const q = search.toLowerCase();
@@ -159,7 +159,7 @@ export function QuarterlyTab({
                 if (regionFilter === "DL Europe" && !d.euInvested) return false;
                 if (regionFilter === "DL US" && d.euInvested) return false;
                 if (troubledOnly && d.troubledCredit) return false;
-                if (!excludedOnly && d.excluded) return false;
+                if (excludedOnly && d.excluded) return false;
                 if (swissOnly && !d.swissHeld) return false;
                 if (search && !d.deal.toLowerCase().includes(search.toLowerCase())) return false;
                 return true;
