@@ -456,6 +456,15 @@ export function buildOverdue(
             if (PERIODIC_EVENTS.has(r.event)) approvedPresent.add(toISODate(pe));
             if (AT_CLOSE_EVENTS.has(r.event)) atCloseBaseline = atCloseBaseline ? maxDate(atCloseBaseline, pe) : pe;
         }
+        // An At-Close statement can itself be unapproved (a brand-new deal whose closing
+        // financials haven't been signed off yet) — without this, a deal whose only row is an
+        // unapproved At-Close has no anchor at all and gets silently dropped from every bucket.
+        for (const r of unapprRows) {
+            if (!AT_CLOSE_EVENTS.has(r.event)) continue;
+            const pe = parseISODate(r.asOfDate);
+            if (!pe) continue;
+            atCloseBaseline = atCloseBaseline ? maxDate(atCloseBaseline, pe) : pe;
+        }
 
         const unapprovedPeriodic = new Set<string>();
         const presentDates: Date[] = [];
@@ -510,6 +519,13 @@ export function buildOverdue(
             if (!NOT_APPROVED_EVENTS.has(r.event)) continue;
             const pe = parseISODate(r.asOfDate);
             if (!pe) continue;
+            if (AT_CLOSE_EVENTS.has(r.event)) {
+                // At-Close approvals are flagged the moment they're unapproved — no delay/buffer
+                // grace period, unlike recurring periodic statements. It's a one-time closing
+                // deliverable, not a recurring filing the team needs lead time to submit.
+                notApprovedPeriods.push({ period: toISODate(pe), days: Math.max(0, daysBetween(today, pe)) });
+                continue;
+            }
             if (pe.getTime() < start.getTime() || pe.getTime() > end.getTime()) continue;
             const periodDelay = oldCadence && oldDelay != null && pe.getTime() < regimeStart.getTime() ? oldDelay : delay;
             const days = daysBetween(today, addDays(pe, periodDelay));
