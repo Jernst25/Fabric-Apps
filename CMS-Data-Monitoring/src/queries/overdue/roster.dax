@@ -3,7 +3,7 @@ EVALUATE SELECTCOLUMNS(
   "DealSrmId",                  DealBlotter[DealSrmId],
   "EntityId",                   DealBlotter[EntityId],
   "EntityName",                 DealBlotter[EntityName],
-  "RealizedUnrealizedStatus",   DealBlotter[RealizedUnrealizedStatus],
+  "RealizedUnrealizedStatus",   DealBlotter[Realized/Unrealized],
   "ExcludeFromReporting",       DealBlotter[ExcludeFromReporting],
   "LastExpectedFinancialsDate", DealBlotter[LastExpectedFinancialsDate],
   "MonthlyDelayDays",           DealBlotter[MonthlyDelayDays],
