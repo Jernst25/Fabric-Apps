@@ -1,5 +1,5 @@
 import { asNumber, asString } from "@/lib/dax";
-import { buildSwissHeldSet } from "./utils";
+import { buildSwissHeldSet, isIgnoredEvent } from "./utils";
 
 export type Severity = "High" | "Medium" | "Low";
 
@@ -72,15 +72,20 @@ const EBITDA = new Set(["TTM Adj EBITDA", "TTM WH Adj EBITDA"]);
 const SORD: Record<Severity, number> = { High: 0, Medium: 1, Low: 2 };
 
 function normalizeFinancials(rows: Record<string, unknown>[]): FinRow[] {
-    return rows.map((r) => ({
-        EntityName: asString(r.EntityName),
-        Period: asString(r.Period),
-        DateKey: asString(r.DateKey),
-        PeriodType: asString(r.PeriodType),
-        Event: asString(r.Event),
-        Level0: asString(r.Level0),
-        Value: asNumber(r.Value),
-    }));
+    return rows
+        .map((r) => ({
+            EntityName: asString(r.EntityName),
+            Period: asString(r.Period),
+            DateKey: asString(r.DateKey),
+            PeriodType: asString(r.PeriodType),
+            Event: asString(r.Event),
+            Level0: asString(r.Level0),
+            Value: asNumber(r.Value),
+        }))
+        // Add-on rows duplicate a period that already has its own Periodic row, so
+        // leaving them in double-counts that period in the per-metric series and
+        // skews the trailing-average comparisons in rules 1-10.
+        .filter((r) => !isIgnoredEvent(r.Event));
 }
 
 function normalizeCovenants(rows: Record<string, unknown>[]): CovenantRow[] {

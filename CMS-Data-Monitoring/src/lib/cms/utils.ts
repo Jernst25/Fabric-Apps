@@ -12,6 +12,30 @@ export function buildSwissHeldSet(rawPosition: Record<string, unknown>[]): Set<s
     return s;
 }
 
+/**
+ * Events excluded from every calculation in the app, filtered at parse time in
+ * both overdue.ts and anomaly-rules.ts so an ignored row cannot leak into any
+ * downstream calculation. Dropping them at the boundary matters because
+ * cadence detection and the cadence-regime walk read every row's PeriodType
+ * regardless of event — merely leaving an event out of the event sets in
+ * overdue.ts would still let it influence those.
+ *
+ * - Add-ons are supplemental transaction records rather than a company's
+ *   recurring reporting, so counting them distorts overdue period coverage and
+ *   double-counts a period in the anomaly metric series.
+ * - "Legacy At Close" is a superseded duplicate of a deal's real "At Close"
+ *   row, so it should neither anchor the expected-period window nor stand in
+ *   as coverage.
+ *
+ * Matching is on a case- and punctuation-insensitive key rather than literal
+ * strings: the source data already carries both "Add On" and "Add-on", so this
+ * stays robust against further spelling drift upstream.
+ */
+const IGNORED_EVENT_KEYS = new Set(["addon", "legacyatclose"]);
+
+export const isIgnoredEvent = (event: string): boolean =>
+    IGNORED_EVENT_KEYS.has(event.toLowerCase().replace(/[^a-z]/g, ""));
+
 export const esc = (s: unknown): string =>
     String(s ?? "")
         .replace(/&/g, "&amp;")

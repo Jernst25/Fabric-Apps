@@ -1,6 +1,8 @@
-import { Moon, RefreshCw, Sun } from "lucide-react";
+import { useState } from "react";
+import { Info, Moon, RefreshCw, Sun } from "lucide-react";
 import { useAppTheme } from "@/hooks/use-theme";
 import { Avatar } from "./Avatar";
+import { LogicInfoModal } from "./LogicInfoModal";
 
 function formatTimestamp(d: Date): string {
     return d.toLocaleString("en-US", {
@@ -24,6 +26,7 @@ export function Header({
     isLoading: boolean;
 }) {
     const { isDark, toggleTheme } = useAppTheme();
+    const [showLogicInfo, setShowLogicInfo] = useState(false);
 
     return (
         <header className="bg-card border-b border-border">
@@ -37,6 +40,14 @@ export function Header({
                         <span className="icon-size-100 rounded-full bg-[color:var(--color-status-approved)]" />
                         Snapshot · {formatTimestamp(new Date())}
                     </span>
+                    <button
+                        onClick={() => setShowLogicInfo(true)}
+                        aria-label="How these numbers are calculated"
+                        title="How these numbers are calculated"
+                        className="rounded-sm p-s text-primary hover:bg-secondary"
+                    >
+                        <Info className="icon-size-300" />
+                    </button>
                     <button
                         onClick={onRefresh}
                         aria-label="Refresh data"
@@ -54,6 +65,8 @@ export function Header({
                     <Avatar name="CMS User" size="sm" />
                 </div>
             </div>
+
+            {showLogicInfo && <LogicInfoModal onClose={() => setShowLogicInfo(false)} />}
         </header>
     );
 }

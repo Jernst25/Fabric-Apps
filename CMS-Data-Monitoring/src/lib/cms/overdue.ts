@@ -1,5 +1,5 @@
 import { asNumber, asString, truthy } from "@/lib/dax";
-import { buildSwissHeldSet, lastInTeam, splitCamel } from "./utils";
+import { buildSwissHeldSet, isIgnoredEvent, lastInTeam, splitCamel } from "./utils";
 import {
     addDays,
     daysBetween,
@@ -23,9 +23,29 @@ const DEFAULT_QUARTERLY_DELAY_DAYS = 45;
 const OVERDUE_BUFFER_DAYS = 15;
 
 const LOOKBACK = 12;
-const PERIODIC_EVENTS = new Set(["Periodic", "Add On"]);
-const AT_CLOSE_EVENTS = new Set(["At Close", "Legacy At Close"]);
-const NOT_APPROVED_EVENTS = new Set(["Periodic", "Add On", "At Close"]);
+/**
+ * "At Exit" is a deal's final filing and satisfies its period exactly like a
+ * "Periodic" one. Without it, a realized deal's LastExpectedFinancialsDate
+ * caps the window at the exit period (correctly), and then that period's only
+ * filing goes unrecognised — reporting a loaded, approved statement as
+ * missing. Add-on events are excluded everywhere; see isIgnoredEvent.
+ *
+ * It belongs in NOT_APPROVED_EVENTS for the same reason: counting as coverage
+ * without being approval-checked would let an unapproved exit filing suppress
+ * its Not Loaded flag while never surfacing as Not Approved, leaving it
+ * invisible in both buckets. It is deliberately NOT in AT_CLOSE_EVENTS, which
+ * also anchors the expected-period window — anchoring on an exit date would
+ * start the window at the end of the deal's life.
+ *
+ * "Legacy At Close" is dropped entirely at parse time (see isIgnoredEvent), so
+ * it neither anchors the window nor stands in as coverage. The only deal
+ * carrying one also has a real "At Close" at the same date, so the anchor is
+ * unaffected; a deal whose *only* closing row were Legacy would instead anchor
+ * on its earliest loaded period.
+ */
+const PERIODIC_EVENTS = new Set(["Periodic", "At Exit"]);
+const AT_CLOSE_EVENTS = new Set(["At Close"]);
+const NOT_APPROVED_EVENTS = new Set(["Periodic", "At Exit", "At Close"]);
 
 export interface OverduePeriodItem {
     period: string;
@@ -161,7 +181,10 @@ function parsePeriodRows(rows: Record<string, unknown>[]): PeriodRow[] {
             periodType: asString(r.PeriodType),
             asOfDate: asString(r.AsOfDate),
         }))
-        .filter((r) => r.entityId && r.asOfDate);
+        // Dropped here rather than at each use site so ignored events cannot reach
+        // cadence detection or the cadence-regime walk, which read every row's
+        // PeriodType regardless of event.
+        .filter((r) => r.entityId && r.asOfDate && !isIgnoredEvent(r.event));
 }
 
 /**
