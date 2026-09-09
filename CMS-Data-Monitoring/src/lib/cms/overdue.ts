@@ -98,6 +98,7 @@ interface RosterRow {
     entityName: string;
     realizedStatus: string;
     exclude: boolean;
+    firstExpectedFinancialsDate: string | null;
     lastExpectedFinancialsDate: string | null;
     monthlyDelayDays: number;
     quarterlyDelayDays: number;
@@ -127,6 +128,7 @@ function parseRoster(rows: Record<string, unknown>[]): RosterRow[] {
         entityName: asString(r.EntityName),
         realizedStatus: asString(r.RealizedUnrealizedStatus),
         exclude: truthy(r.ExcludeFromReporting),
+        firstExpectedFinancialsDate: asString(r.FirstExpectedFinancialsDate) || null,
         lastExpectedFinancialsDate: asString(r.LastExpectedFinancialsDate) || null,
         monthlyDelayDays: asNumber(r.MonthlyDelayDays) ?? 0,
         quarterlyDelayDays: asNumber(r.QuarterlyDelayDays) ?? 0,
@@ -481,7 +483,21 @@ export function buildOverdue(
         }
 
         const dueCutoff = periodEndAtOrBefore(addDays(today, -delay), cadence);
-        const anchor = atCloseBaseline ? periodEndAfter(atCloseBaseline, cadence) : earliestDate(presentDates);
+        // FirstExpectedFinancialsDate is the authoritative start of a deal's reporting
+        // obligation, so when set it wins over the derived anchors — mirroring how
+        // LastExpectedFinancialsDate caps `end` below. The derived anchors are inference:
+        // At-Close is a proxy for "reporting starts after closing", and earliest-loaded
+        // can only ever start at what was actually filed, so it structurally cannot detect
+        // periods missing *before* the first filing. Anchoring on the expected date fixes
+        // that, and equally suppresses false positives for a deal whose obligation began
+        // later than its At-Close. Aligned with periodEndOf (not periodEndAfter): the
+        // period *containing* the expected date is the first one owed.
+        const firstExpected = parseISODate(deal.firstExpectedFinancialsDate);
+        const anchor = firstExpected
+            ? periodEndOf(firstExpected, cadence)
+            : atCloseBaseline
+                ? periodEndAfter(atCloseBaseline, cadence)
+                : earliestDate(presentDates);
         if (!anchor) continue;
 
         const windowStart = stepPeriod(dueCutoff, cadence, -(LOOKBACK - 1));
