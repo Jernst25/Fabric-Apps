@@ -228,11 +228,16 @@ export function ExecutiveSummaryTab({
 
             <div>
                 <h3 className="text-400 font-semibold mb-m">Overdue CMS Financials</h3>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-m">
-                    <KpiCard label="Deals Impacted" value={filteredOverdue.totalDealsOverdue} />
+                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-m">
+                    <KpiCard
+                        label="Deals Impacted"
+                        value={filteredOverdue.totalDealsOverdue}
+                        subtext={`+ ${filteredOverdue.noFinancials.length} with no financials`}
+                    />
                     <KpiCard label="Periods Not Loaded" value={filteredOverdue.notLoadedPeriods} accent="medium" />
                     <KpiCard label="Periods Not Approved" value={filteredOverdue.notApprovedPeriods} accent="high" />
                     <KpiCard label="Max Days Overdue" value={filteredOverdue.maxDaysOverdue} />
+                    <KpiCard label="New Deals with No Financials" value={filteredOverdue.noFinancials.length} />
                 </div>
             </div>
 
@@ -257,8 +262,7 @@ export function ExecutiveSummaryTab({
                 {overdueNotApprovedChart.length > 0 && <PersonBarChart title="Overdue: Not Approved by approver" data={overdueNotApprovedChart} />}
             </div>
 
-            {/* Always shows every deal with no financials, regardless of the page's filters. */}
-            <NoFinancialsTable deals={overdue.noFinancials} />
+            <NoFinancialsTable deals={filteredOverdue.noFinancials} />
         </div>
     );
 }

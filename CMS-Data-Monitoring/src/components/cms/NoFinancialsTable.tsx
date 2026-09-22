@@ -10,7 +10,8 @@ export function NoFinancialsTable({ deals }: { deals: NoFinancialsDeal[] }) {
             <div className="px-l py-m border-b border-border">
                 <h3 className="text-400 font-semibold">New Deals with No Financials</h3>
                 <p className="text-200 text-muted-foreground mt-xxs">
-                    Review surface, not an overdue count — some entries may be non-reporting vehicles. Confirm before treating as a genuine gap.
+                    Review surface, not an overdue count — some entries may be non-reporting vehicles. Confirm before
+                    treating as a genuine gap. Deals within 10 days of closing are held back as too new to have reported.
                 </p>
             </div>
             <table className="w-full text-300">
@@ -19,6 +20,7 @@ export function NoFinancialsTable({ deals }: { deals: NoFinancialsDeal[] }) {
                         <th className="px-l py-s font-semibold">Deal</th>
                         <th className="px-l py-s font-semibold">Deal SRM ID</th>
                         <th className="px-l py-s font-semibold">Responsible</th>
+                        <th className="px-l py-s font-semibold">At Close</th>
                         <th className="px-l py-s font-semibold">Last Expected</th>
                         <th className="px-l py-s font-semibold">Status</th>
                     </tr>
@@ -56,6 +58,7 @@ export function NoFinancialsTable({ deals }: { deals: NoFinancialsDeal[] }) {
                             </td>
                             <td className="px-l py-s text-muted-foreground">{d.dealSrmId}</td>
                             <td className="px-l py-s">{d.person}</td>
+                            <td className="px-l py-s text-muted-foreground">{d.atCloseDate ?? "—"}</td>
                             <td className="px-l py-s text-muted-foreground">{d.lastExpectedFinancialsDate ?? "—"}</td>
                             <td className="px-l py-s">
                                 <span className="text-200 rounded bg-muted px-s py-xxs font-medium">Review</span>

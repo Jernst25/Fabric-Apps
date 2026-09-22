@@ -18,5 +18,12 @@ EVALUATE SELECTCOLUMNS(
   "DealTeam",                    DealBlotter[DealTeam],
   "Comment",                     DealBlotter[Comment],
   "EUInvested",                  DealBlotter[EU Invested],
-  "TroubledCredit",              DealBlotter[TroubledCredit]
+  "TroubledCredit",              DealBlotter[TroubledCredit],
+  -- Deal close date, joined from the cashflows table on InvestmentDealFullCode.
+  -- DealBlotter[AtCloseDate] is a different concept and is blank for the newest
+  -- deals, which are exactly the ones the No Financials grace period grades.
+  "AtCloseDate",                 LOOKUPVALUE(
+                                   'Cashflows - AtCloseDate'[AtCloseDate],
+                                   'Cashflows - AtCloseDate'[InvestmentDealFullCode], DealBlotter[InvestmentDealFullCode]
+                                 )
 )

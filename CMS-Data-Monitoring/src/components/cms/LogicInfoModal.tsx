@@ -102,10 +102,31 @@ export function LogicInfoModal({ onClose }: { onClose: () => void }) {
                         <Rule label="What it means">
                             An Unrealized deal with no financial statements loaded at all, approved or otherwise.
                         </Rule>
+                        <Rule label="Grace period">
+                            A deal appears only once <strong>10 calendar days</strong> have passed since its At Close
+                            date. Inside that window it is too new to have reported, not late, so it is held back
+                            from the table entirely rather than shown and explained away. A deal with no At Close
+                            date on record is shown, since there is no window to measure it against and an unknown
+                            date should not quietly drop a deal off the review list.
+                        </Rule>
+                        <Rule label="At Close date">
+                            Taken from the cashflows At Close table, matched to the deal on Investment Deal Full
+                            Code. This is the deal’s closing date, not the Deal Blotter’s At Close column, which
+                            tracks a different concept and is blank for the newest deals — precisely the ones the
+                            grace period has to grade.
+                        </Rule>
                         <Rule label="Why it is separate">
                             With no filings on record there is no cadence to establish and no period window to grade
                             against, so these deals cannot be counted as a number of overdue periods. They are listed
                             on their own rather than folded into the overdue totals.
+                        </Rule>
+                        <Rule label="In the KPIs">
+                            <strong>New Deals with No Financials</strong> counts the rows in this table. They are also
+                            shown beneath <strong>Deals Impacted</strong> as “+ N with no financials”, added
+                            alongside that figure rather than into it, since they carry no overdue periods. Both
+                            counts follow the page filters on either tab. Because this bucket carries no period or
+                            region data and is always Unrealized, a Period, Region, or Realized filter empties it
+                            rather than narrowing it.
                         </Rule>
                         <Rule label="Not included">
                             Realized deals. A realized deal with no Last Expected Financials Date is out of scope

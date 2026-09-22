@@ -120,3 +120,49 @@ describe("buildOverdue event handling", () => {
         expect(overduePeriodsFor(approved)).toEqual(["2024-09-30"]);
     });
 });
+
+describe("No Financials grace period", () => {
+    beforeEach(() => {
+        vi.useFakeTimers();
+        vi.setSystemTime(TODAY);
+    });
+    afterEach(() => {
+        vi.useRealTimers();
+    });
+
+    /** An Unrealized deal with no filings at all, closed `atClose`. */
+    function noFinancialsFor(atClose: string | null) {
+        const roster = [rosterRow({
+            RealizedUnrealizedStatus: "Unrealized",
+            LastExpectedFinancialsDate: null,
+            AtCloseDate: atClose === null ? null : `${atClose}T00:00:00`,
+        })];
+        return buildOverdue(roster, [], [], [], []).noFinancials;
+    }
+
+    it("hides a deal that closed inside the 10-day grace period", () => {
+        // TODAY is 2026-09-09, so this deal is 9 days old.
+        expect(noFinancialsFor("2026-08-31")).toEqual([]);
+    });
+
+    it("shows a deal exactly 10 days after close", () => {
+        expect(noFinancialsFor("2026-08-30").map((d) => d.atCloseDate)).toEqual(["2026-08-30"]);
+    });
+
+    it("shows a deal well past its grace period", () => {
+        expect(noFinancialsFor("2025-01-15").map((d) => d.atCloseDate)).toEqual(["2025-01-15"]);
+    });
+
+    it("shows a deal with no At Close date on record", () => {
+        expect(noFinancialsFor(null).map((d) => d.atCloseDate)).toEqual([null]);
+    });
+
+    it("keeps a held-back deal out of the status table too", () => {
+        const roster = [rosterRow({
+            RealizedUnrealizedStatus: "Unrealized",
+            LastExpectedFinancialsDate: null,
+            AtCloseDate: "2026-09-08T00:00:00",
+        })];
+        expect(buildOverdue(roster, [], [], [], []).statusRows).toEqual([]);
+    });
+});

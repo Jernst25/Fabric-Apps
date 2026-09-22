@@ -385,7 +385,7 @@ export function OverdueTab({ data }: { data: OverdueResult }) {
                 </div>
             </FilterRibbon>
 
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-m">
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-m">
                 <KpiCard label="Deals Impacted" value={dealsImpactedShown} subtext={`+ ${noFinancials.length} with no financials`} />
                 <KpiCard
                     label="Periods Not Loaded"
@@ -402,6 +402,12 @@ export function OverdueTab({ data }: { data: OverdueResult }) {
                     onClick={() => setIsolate((v) => (v === "notApproved" ? "none" : "notApproved"))}
                 />
                 <KpiCard label="Max Days Overdue" value={maxDaysOverdueShown} subtext="oldest outstanding period" />
+                <KpiCard
+                    label="New Deals with No Financials"
+                    value={noFinancials.length}
+                    subtext="click to isolate"
+                    onClick={() => setIsolate((v) => (v === "noFinancials" ? "none" : "noFinancials"))}
+                />
             </div>
 
             {alertsShown.length > 0 && (

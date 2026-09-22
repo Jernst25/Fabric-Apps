@@ -24,6 +24,13 @@ const OVERDUE_BUFFER_DAYS = 15;
 
 const LOOKBACK = 12;
 /**
+ * A deal with no filings at all is only worth reviewing once it has had a
+ * reasonable window to report after closing. Deals inside this window are
+ * brand new, not delinquent, so they are held back from the No Financials
+ * table entirely. Calendar days, measured from the deal's At Close date.
+ */
+const NO_FINANCIALS_GRACE_DAYS = 10;
+/**
  * "At Exit" is a deal's final filing and satisfies its period exactly like a
  * "Periodic" one. Without it, a realized deal's LastExpectedFinancialsDate
  * caps the window at the exit period (correctly), and then that period's only
@@ -76,6 +83,7 @@ export interface NoFinancialsDeal {
     dealSrmId: string;
     deal: string;
     person: string;
+    atCloseDate: string | null;
     lastExpectedFinancialsDate: string | null;
     comment: string | null;
     excluded: boolean;
@@ -118,6 +126,7 @@ interface RosterRow {
     entityName: string;
     realizedStatus: string;
     exclude: boolean;
+    atCloseDate: string | null;
     firstExpectedFinancialsDate: string | null;
     lastExpectedFinancialsDate: string | null;
     monthlyDelayDays: number;
@@ -148,6 +157,7 @@ function parseRoster(rows: Record<string, unknown>[]): RosterRow[] {
         entityName: asString(r.EntityName),
         realizedStatus: asString(r.RealizedUnrealizedStatus),
         exclude: truthy(r.ExcludeFromReporting),
+        atCloseDate: asString(r.AtCloseDate) || null,
         firstExpectedFinancialsDate: asString(r.FirstExpectedFinancialsDate) || null,
         lastExpectedFinancialsDate: asString(r.LastExpectedFinancialsDate) || null,
         monthlyDelayDays: asNumber(r.MonthlyDelayDays) ?? 0,
@@ -160,6 +170,19 @@ function parseRoster(rows: Record<string, unknown>[]): RosterRow[] {
         euInvested: truthy(r.EUInvested),
         troubledCredit: truthy(r.TroubledCredit),
     }));
+}
+
+/**
+ * A deal with no filings is only surfaced once NO_FINANCIALS_GRACE_DAYS have
+ * elapsed since it closed; before that it is simply too new to have reported.
+ * A deal with no At Close date on record has no grace period to measure, so it
+ * is surfaced rather than hidden — an unknown close date should not silently
+ * remove a deal from the review list.
+ */
+function pastNoFinancialsGrace(d: RosterRow, today: Date): boolean {
+    const atClose = parseISODate(d.atCloseDate);
+    if (!atClose) return true;
+    return daysBetween(today, atClose) >= NO_FINANCIALS_GRACE_DAYS;
 }
 
 /**
@@ -441,11 +464,12 @@ export function buildOverdue(
         const person = lastNonEmpty(deal.professionals) || lastInTeam(deal.dealTeam) || "(Unassigned)";
 
         if (finRows.length === 0 && unapprRows.length === 0) {
-            if (deal.realizedStatus === "Unrealized") {
+            if (deal.realizedStatus === "Unrealized" && pastNoFinancialsGrace(deal, today)) {
                 noFinancials.push({
                     dealSrmId: deal.dealSrmId,
                     deal: deal.entityName,
                     person,
+                    atCloseDate: deal.atCloseDate ? toISODate(parseISODate(deal.atCloseDate)!) : null,
                     lastExpectedFinancialsDate: deal.lastExpectedFinancialsDate,
                     comment: deal.comment,
                     excluded: deal.exclude,
